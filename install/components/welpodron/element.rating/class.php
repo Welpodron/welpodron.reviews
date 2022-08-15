@@ -45,21 +45,30 @@ class WelpodronElementRating extends CBitrixComponent
                 'PROPERTY_element' => $this->arParams['ELEMENT_ID']
             ];
             $arOrder = [];
-            $arGroup = false;
+            $arGroup = ['PROPERTY_rating'];
             $arNav = false;
             $arSelect = ['IBLOCK_ID', 'ID', 'PROPERTY_rating'];
 
             $dbElements = CIBlockElement::GetList($arOrder, $arFilter, $arGroup, $arNav, $arSelect);
 
-            $sumRatingCounter = 0; // Можно использовать CIBlockElement с параметром подсчета элементов вместо отдельной переменной
-            $sumRatingValue = 0;
+            $totalRatingsAmount = 0; // Можно использовать CIBlockElement с параметром подсчета элементов вместо отдельной переменной
+            $totalRatingsSum = 0;
+
+            $arRatingsGroups = [
+                '5' => 0,
+                '4' => 0,
+                '3' => 0,
+                '2' => 0,
+                '1' => 0
+            ];
 
             while ($arObj = $dbElements->Fetch()) {
-                $sumRatingValue += intval($arObj['PROPERTY_RATING_VALUE']);
-                $sumRatingCounter++;
+                $totalRatingsAmount += intval($arObj['CNT']);
+                $totalRatingsSum += intval($arObj['PROPERTY_RATING_VALUE']) * intval($arObj['CNT']);
+                $arRatingsGroups[$arObj['PROPERTY_RATING_VALUE']] = $arRatingsGroups[$arObj['PROPERTY_RATING_VALUE']] + intval($arObj['CNT']);
             }
 
-            return ['SUM_RATING_VALUE' => $sumRatingValue, 'RATING_COUNTER' => $sumRatingCounter, 'RATING_VALUE_CALCULATED' => $sumRatingValue / $sumRatingCounter];
+            return ['RATINGS_BY_GROUPS' => $arRatingsGroups, 'RATINGS_TOTAL_AMOUNT' => $totalRatingsAmount, 'RATINGS_TOTAL_SUM' => $totalRatingsSum, 'RATING_VALUE_CALCULATED' => $totalRatingsSum / $totalRatingsAmount];
         }
     }
 }
