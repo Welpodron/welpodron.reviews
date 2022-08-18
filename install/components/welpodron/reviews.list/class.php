@@ -9,6 +9,8 @@ use Bitrix\Main\FileTable;
 use Bitrix\Main\Context;
 use Bitrix\Main\Config\Option;
 
+// TODO: Добавить ответы от менеджера
+
 class WelpodronReviewsList extends CBitrixComponent
 {
     const MODULE_ID = "welpodron.reviews";

@@ -43,7 +43,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         Комментарий:
         <textarea name="comment"></textarea>
     </label>
-    <input multiple="" max="<?= $arResult['MAX_FILES_ALLOWED'] ?>" accept=".jpg, .jpeg, .png" type="file" name="images[]">
+    <div data-files-dropzone>
+        <div data-files-dropzone-showcase></div>
+        <label data-files-dropzone-zone>
+            <input multiple accept=".jpg, .jpeg, .png" type="file" name="images[]">
+            <span data-files-dropzone-drop-display>
+                <span>
+                    <span>Выберите фотографии<br> или перетащите изображения в эту область</span>
+                </span>
+            </span>
+            <span data-files-dropzone-dropping-display>
+                <span>
+                    <span>Отпустите файл для его загрузки</span>
+                </span>
+            </span>
+        </label>
+    </div>
     <button>Отправить отзыв</button>
 </form>
 <script>

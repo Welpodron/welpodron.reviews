@@ -39,26 +39,26 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
 ?>
 
 <? if (!$postAjaxCall) : ?>
-    <div id="comp_<?= $bxajaxid ?>">
+    <div class="reviews-list" id="comp_<?= $bxajaxid ?>">
     <? endif; ?>
-    <form id="<?= $formFilterId ?>" method="POST">
+    <form class="reviews-list__filter" id="<?= $formFilterId ?>" method="POST">
         <!-- AJAX v2 -->
         <input type="hidden" name="bxajaxid" value="<?= $bxajaxid ?>">
         <input type="hidden" name="AJAX_CALL" value="Y">
         <!-- AJAX v2 -->
         <input name="reviewsamount" value="0" type="hidden" />
-        <label>
-            <span>Сортировать по:</span>
-            <select name="order">
+        <label class="reviews-list__filter-field">
+            <span class="reviews-list__filter-field-name">Сортировать по:</span>
+            <select class="reviews-list__select" name="order">
                 <option <?= $postOrder == "property_rating:desc" ? 'selected' : '' ?> value="property_rating:desc">Оценка по убыванию</option>
                 <option <?= $postOrder == "property_rating:asc" ? 'selected' : '' ?> value="property_rating:asc">Оценка по возрастанию</option>
                 <option <?= $postOrder == "created:desc" ? 'selected' : '' ?> value="created:desc">Новые</option>
                 <option <?= $postOrder == "created:asc" ? 'selected' : '' ?> value="created:asc">Старые</option>
             </select>
         </label>
-        <label>
-            <span>Оценка:</span>
-            <select name="rating">
+        <label class="reviews-list__filter-field">
+            <span class="reviews-list__filter-field-name">Оценка:</span>
+            <select class="reviews-list__select" name="rating">
                 <option value="">Любая</option>
                 <option <?= $postRating == "5" ? 'selected' : '' ?> value="5">5 звезд</option>
                 <option <?= $postRating == "4" ? 'selected' : '' ?> value="4">4 звезды</option>
@@ -67,9 +67,9 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
                 <option <?= $postRating == "1" ? 'selected' : '' ?> value="1">1 звезда</option>
             </select>
         </label>
-        <label>
-            <span>С фото:</span>
-            <input <?= $request->get('images') == "1" ? 'checked' : '' ?> type="checkbox" name="images" value="1" />
+        <label class="reviews-list__filter-field">
+            <span class="reviews-list__filter-field-name">С фото:</span>
+            <input class="reviews-list__checkbox" <?= $request->get('images') == "1" ? 'checked' : '' ?> type="checkbox" name="images" value="1" />
         </label>
     </form>
 
@@ -107,9 +107,9 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
             );
             ?>
             <div class="reviews-list__item" itemprop="review" itemscope itemtype="https://schema.org/Review" id="<?= $this->GetEditAreaId($arItem['FIELDS']['ID']); ?>">
-                <div>
+                <div class="reviews-list__rating">
                     <span itemprop="reviewRating" style="display: none;"><?= $arItem['PROPS']['rating']['VALUE'] ?></span>
-                    <div style="width:calc(<?= $arItem['PROPS']['rating']['VALUE'] ?> * 20%)"></div>
+                    <div class="reviews-list__rating-current" style="width:calc(<?= $arItem['PROPS']['rating']['VALUE'] ?> * 20%)"></div>
                 </div>
                 <p itemprop="author"><?= $arItem['PROPS']['author']['VALUE'] ?></p>
                 <p itemprop="datePublished" content="<?= $arItem['FIELDS']['DATE_CREATE'] ?>"><?= $arItem['FIELDS']['DATE_CREATE'] ?></p>
@@ -132,15 +132,15 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
                 <? if ($arItem['PROPS']['images']['VALUE']) : ?>
                     <div>
                         <p>Фотографии:</p>
-                        <div>
+                        <div class="reviews-list__images">
                             <? foreach ($arItem['PROPS']['images']['VALUE'] as $reviewImage) : ?>
-                                <img src="<?= $reviewImage['SRC'] ?>" />
+                                <img class="reviews-list__img" src="<?= $reviewImage['SRC'] ?>" />
                             <? endforeach; ?>
                         </div>
                     </div>
                 <? endif; ?>
                 <? if ($arItem['PROPS']['responce_text']['VALUE']) : ?>
-                    <div>
+                    <div class="reviews-list__responce">
                         <p>Менеджер Ольга</p>
                         <p><?= $arItem['PROPS']['responce_text']['VALUE'] ?></p>
                     </div>
@@ -160,7 +160,7 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
                 <input name="rating" value="<?= $arResult['CURRENT_FILTER']['FILTER']['PROPERTY_rating'] ?>" type="hidden" />
                 <input name="images" value="<?= $arResult['CURRENT_FILTER']['FILTER']['PROPERTY_rating'] ?>" type="hidden" />
                 <input name="reviewsamount" value="<?= $arResult['NAV_RESULT']["NavPageSize"] + intval($arParams['ELEMENTS_PER_PAGE']) ?>" type="hidden" />
-                <button>Показать еще</button>
+                <button class="reviews-list__show-more">Показать еще</button>
             </form>
             <script>
                 document.querySelector('#<?= $formPaginationId ?>').onsubmit = (evt) => {

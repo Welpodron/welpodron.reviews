@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\UrlManager;
 
 class WelpodronReviewsForm extends CBitrixComponent
 {
@@ -34,6 +35,20 @@ class WelpodronReviewsForm extends CBitrixComponent
 
     protected function getParams()
     {
-        return ['FORM_ID' => 'form_' . md5(uniqid('', false)), 'JS_ACTION' => 'welpodron:reviews.receiver.save', 'MAX_FILES_ALLOWED' => Option::get(self::MODULE_ID, 'MAX_FILES_AMOUNT')];
+        // По какой-то причине здесь нужно указывать id модуля через двоеточие
+        $MODULE_ID = "welpodron:reviews";
+        $CONTROLLER = "receiver";
+        $CONTROLLER_ACTION = "save";
+        $FORM_ACTION_URL = UrlManager::getInstance()->create($MODULE_ID . '.' . $CONTROLLER . '.' . $CONTROLLER_ACTION);
+
+        return [
+            'FORM_ID' => 'form_' . md5(uniqid('', false)),
+            'DIALOG_ID' => 'dialog_' . md5(uniqid('', false)),
+            'ACTION_URL' => $FORM_ACTION_URL,
+            'BX_JS_ACTION' => 'welpodron:reviews.receiver.save',
+            'MAX_FILES_ALLOWED' => intval(Option::get(self::MODULE_ID, 'MAX_FILES_AMOUNT')),
+            'MAX_FILE_SIZE_MB' => intval(Option::get(self::MODULE_ID, 'MAX_FILE_SIZE')),
+            'MAX_FILE_SIZE_BYTES' => intval(Option::get(self::MODULE_ID, 'MAX_FILE_SIZE')) * 1024 * 1024,
+        ];
     }
 }

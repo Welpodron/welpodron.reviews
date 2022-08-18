@@ -3,19 +3,37 @@
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
+use Bitrix\Main\Context;
+
+IncludeModuleLangFile(__FILE__);
 
 class welpodron_reviews extends \CModule
 {
-    const IBLOCK_TYPE = "welpodron_reviews";
+    const DEFAULT_IBLOCK_TYPE = "welpodron_reviews";
+    const DEFAULT_EVENT_TYPE = 'WELPODRON_REVIEWS_FEEDBACK';
 
     public function DoInstall()
     {
         global $APPLICATION;
 
-        ModuleManager::registerModule($this->MODULE_ID);
+        if (!CheckVersion(ModuleManager::getVersion('main'), '14.00.00')) {
+            $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_VERSION"));
+            return false;
+        }
 
-        $this->InstallDb();
-        $this->InstallFiles();
+        if (!$this->InstallDb()) {
+            return false;
+        }
+
+        if (!$this->InstallEvents()) {
+            return false;
+        }
+
+        if (!$this->InstallFiles()) {
+            return false;
+        }
+
+        ModuleManager::registerModule($this->MODULE_ID);
 
         $APPLICATION->IncludeAdminFile('Установка модуля ' . $this->MODULE_ID, __DIR__ . '/step.php');
     }
@@ -24,13 +42,13 @@ class welpodron_reviews extends \CModule
     {
         global $APPLICATION;
 
-        $context = Application::getInstance()->getContext();
-        $request = $context->getRequest();
+        $request = Context::getCurrent()->getRequest();
 
         if ($request->get("step") < 2) {
             $APPLICATION->IncludeAdminFile('Деинсталляция модуля ' . $this->MODULE_ID, __DIR__ . '/unstep1.php');
         } elseif ($request->get("step") == 2) {
             $this->UnInstallFiles();
+            $this->UnInstallEvents();
             // По умолчанию БД не удаляется 
 
             if ($request->get("savedata") != "Y")
@@ -41,18 +59,164 @@ class welpodron_reviews extends \CModule
         }
     }
 
+    public function InstallEvents()
+    {
+        global $APPLICATION, $DB;
+
+        $dbSites = CSite::GetList($by = "sort", $order = "desc");
+        while ($arSite = $dbSites->Fetch()) {
+            $arSites[] = $arSite["LID"];
+        }
+
+        foreach ($arSites as $siteId) {
+            $dbEt = CEventType::GetByID(self::DEFAULT_EVENT_TYPE, $siteId);
+            $arEt = $dbEt->Fetch();
+
+            if (!$arEt) {
+                $et = new CEventType;
+
+                $DB->StartTransaction();
+
+                $et = $et->Add([
+                    'LID' => $siteId,
+                    'EVENT_NAME' => self::DEFAULT_EVENT_TYPE,
+                    'NAME' => 'Добавление отзыва',
+                    'EVENT_TYPE' => 'email',
+                    'DESCRIPTION'  => '
+                    #FORM_ID# - ID Формы 
+                    #SCHEMA_ID# - ID Схемы
+                    #USER_ID# - ID Пользователя
+                    #SESSION_ID# - Сессия пользователя
+                    #IP# - IP Адрес пользователя
+                    #PAGE# - Страница отправки
+                    #USER_AGENT# - UserAgent
+                    #PAYLOAD# - Содержимое заявки
+                    #EMAIL_TO# - Email получателя письма
+                    '
+                ]);
+
+                if (!$et) {
+                    $DB->Rollback();
+
+                    $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_EVENT_TYPE_INSTALL") . $APPLICATION->LAST_ERROR);
+
+                    return false;
+                } else {
+                    $DB->Commit();
+                }
+            }
+
+            $dbMess = CEventMessage::GetList('id', 'desc', ['SITE_ID' => $siteId, 'TYPE_ID' => self::DEFAULT_EVENT_TYPE]);
+            $arMess = $dbMess->Fetch();
+
+            if (!$arMess) {
+                $mess = new CEventMessage;
+
+                $DB->StartTransaction();
+
+                $messId = $mess->Add([
+                    'ACTIVE' => 'Y',
+                    'EVENT_NAME' => self::DEFAULT_EVENT_TYPE,
+                    'LID' => $siteId,
+                    'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+                    'EMAIL_TO' => '#EMAIL_TO#',
+                    'SUBJECT' => '#SITE_NAME#: Сообщение из формы обратной связи',
+                    'BODY_TYPE' => 'html',
+                    // 'LANGUAGE_ID' => SITE_ID,
+                    'MESSAGE' => '
+                    <!DOCTYPE html>
+                    <html lang="ru">
+                    <head>
+                    <meta charset="utf-8">
+                    <title>Новая заявка</title>
+                    </head>
+                    <body>
+                    <p>
+                    Вам было отправлено сообщение через форму обратной связи
+                    </p>
+                    <p>
+                    Содержимое заявки:
+                    </p>
+                    <p>
+                    #PAYLOAD#
+                    </p>
+                    <p>
+                    ID формы через которую была получена заявка: #FORM_ID#
+                    </p>
+                    <p>
+                    ID используемой схемы: #SCHEMA_ID#
+                    </p>
+                    <p>
+                    Отправлено пользователем: #USER_ID#
+                    </p>
+                    <p>
+                    Сессия пользователя: #SESSION_ID#
+                    </p>
+                    <p>
+                    IP адрес отправителя: #IP#
+                    </p>
+                    <p>
+                    Страница отправки: <a href="#PAGE#">#PAGE#</a>
+                    </p>
+                    <p>
+                    Используемый USER AGENT: #USER_AGENT#
+                    </p>
+                    <p>
+                    Письмо сформировано автоматически.
+                    </p>
+                    </body>
+                    </html>
+                    '
+                ]);
+
+                if (!$messId) {
+                    $DB->Rollback();
+
+                    $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_EVENT_MESS_INSTALL") . $mess->LAST_ERROR);
+
+                    return false;
+                } else {
+                    $DB->Commit();
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public function UnInstallEvents()
+    {
+        $dbSites = CSite::GetList($by = "sort", $order = "desc");
+        while ($arSite = $dbSites->Fetch()) {
+            $arSites[] = $arSite["LID"];
+        }
+
+        foreach ($arSites as $siteId) {
+            $dbMess = CEventMessage::GetList('id', 'desc', ['SITE_ID' => $siteId, 'TYPE_ID' => self::DEFAULT_EVENT_TYPE]);
+            $arMess = $dbMess->Fetch();
+            CEventMessage::Delete($arMess['ID']);
+        }
+
+        CEventType::Delete(self::DEFAULT_EVENT_TYPE);
+    }
+
     public function InstallDb()
     {
-        Loader::includeModule("iblock");
+        global $APPLICATION, $DB;
+
+        if (!Loader::includeModule("iblock")) {
+            $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_LOADER_IBLOCK"));
+            return false;
+        };
 
         // Попытаться найти тип 
-        $iblockType = \CIBlockType::GetList([], ['=ID' => self::IBLOCK_TYPE])->Fetch();
+        $iblockType = CIBlockType::GetList([], ['=ID' => self::DEFAULT_IBLOCK_TYPE])->Fetch();
 
         if (!$iblockType) {
-            $iblockType = new \CIBlockType;
+            $iblockType = new CIBlockType;
 
             $arFields = [
-                'ID' => self::IBLOCK_TYPE,
+                'ID' => self::DEFAULT_IBLOCK_TYPE,
                 'SECTIONS' => 'N',
                 'LANG' => [
                     'en' => [
@@ -66,23 +230,35 @@ class welpodron_reviews extends \CModule
                 ]
             ];
 
-            $iblockType = $iblockType->Add($arFields);
+            $DB->StartTransaction();
+
+            $addResult = $iblockType->Add($arFields);
+
+            if (!$addResult) {
+                $DB->Rollback();
+
+                $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_IBLOCK_TYPE_INSTALL") . $iblockType->LAST_ERROR);
+
+                return false;
+            } else {
+                $DB->Commit();
+            }
+        }
+
+        $dbSites = CSite::GetList($by = "sort", $order = "desc");
+        while ($arSite = $dbSites->Fetch()) {
+            $arSites[] = $arSite["LID"];
         }
 
         // Попытаться найти хотя бы один инфоблок
-        $firstFoundIblock = \CIBlock::GetList([], ['TYPE' => self::IBLOCK_TYPE])->Fetch();
+        $firstFoundIblock = CIBlock::GetList([], ['TYPE' => self::DEFAULT_IBLOCK_TYPE])->Fetch();
 
         if (!$firstFoundIblock) {
-            $firstIblock = new \CIBlock;
-
-            $dbSites = \CSite::GetList();
-            while ($arSite = $dbSites->Fetch()) {
-                $arSites[] = $arSite['ID'];
-            }
+            $firstIblock = new CIBlock;
 
             $arFields = [
                 "NAME" => 'Welpodron Отзывы',
-                "IBLOCK_TYPE_ID" => self::IBLOCK_TYPE,
+                "IBLOCK_TYPE_ID" => self::DEFAULT_IBLOCK_TYPE,
                 "ELEMENTS_NAME" => "Отзывы",
                 "ELEMENT_NAME" => "Отзыв",
                 "ELEMENT_ADD" => "Добавить отзыв",
@@ -91,7 +267,20 @@ class welpodron_reviews extends \CModule
                 "SITE_ID" => $arSites,
             ];
 
+            $DB->StartTransaction();
+
             $iblockId = $firstIblock->Add($arFields);
+
+            if (!$iblockId) {
+                $DB->Rollback();
+
+                $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_IBLOCK_INSTALL") . $firstIblock->LAST_ERROR);
+
+                return false;
+            } else {
+                $DB->Commit();
+            }
+
             // TODO: 2 - Группа всех пользователей можно получать динамически ?
             CIBlock::SetPermission($iblockId, ["2" => "R"]);
 
@@ -139,27 +328,53 @@ class welpodron_reviews extends \CModule
                     "MULTIPLE" => "Y",
                     "FILE_TYPE" => "jpg, png, jpeg",
                     "IBLOCK_ID" => $iblockId
-                ]
+                ],
+                [
+                    "NAME" => "Ответ",
+                    "CODE" => "responce_text",
+                    "IBLOCK_ID" => $iblockId
+                ],
             ];
 
             foreach ($arProps as $prop) {
-                $iblockProp = new \CIBlockProperty;
-                $iblockProp->Add($prop);
+                $iblockProp = new CIBlockProperty;
+
+                $DB->StartTransaction();
+
+                $iblockPropId = $iblockProp->Add($prop);
+
+                if (!$iblockPropId) {
+                    $DB->Rollback();
+
+                    $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_IBLOCK_PROPERTY_INSTALL") . $iblockProp->LAST_ERROR);
+
+                    return false;
+                } else {
+                    $DB->Commit();
+                }
             }
         }
+
+        return true;
     }
 
     public function UnInstallDB()
     {
         Loader::includeModule("iblock");
         // Удалить iblock_type
-        CIBlockType::Delete(self::IBLOCK_TYPE);
+        CIBlockType::Delete(self::DEFAULT_IBLOCK_TYPE);
     }
 
     public function InstallFiles()
     {
+        global $APPLICATION;
         // На данный момент папка перемещается в local пространство
-        CopyDirFiles(__DIR__ . '/components/', Application::getDocumentRoot() . '/local/components', true, true);
+        if (!CopyDirFiles(__DIR__ . '/components/', Application::getDocumentRoot() . '/local/components', true, true)) {
+            $APPLICATION->ThrowException(GetMessage("WELPODRON_REVIEWS_INSTALL_ERROR_FILES_COPY"));
+            return false;
+        };
+
+        return true;
     }
 
     public function UnInstallFiles()
@@ -172,20 +387,16 @@ class welpodron_reviews extends \CModule
     public function __construct()
     {
         $this->MODULE_ID = 'welpodron.reviews';
-        $this->MODULE_NAME = 'Модуль ' . $this->MODULE_ID;
-        $this->MODULE_DESCRIPTION = 'Модуль ' . $this->MODULE_ID;
-        $this->PARTNER_NAME = 'welpodron';
-        $this->PARTNER_URI = 'https://github.com/Welpodron';
+        $this->MODULE_NAME = GetMessage("WELPODRON_REVIEWS_MODULE_NAME");
+        $this->MODULE_DESCRIPTION = GetMessage("WELPODRON_REVIEWS_MODULE_DESC");
+        $this->PARTNER_NAME = GetMessage("WELPODRON_REVIEWS_PARTNER_NAME");
+        $this->PARTNER_URI = GetMessage("WELPODRON_REVIEWS_PARTNER_URI");
 
         $arModuleVersion = [];
 
-        $path = str_replace('\\', '/', __FILE__);
-        $path = substr($path, 0, strlen($path) - strlen('/index.php'));
-        include $path . '/version.php';
+        include(__DIR__ . "/version.php");
 
-        if (is_array($arModuleVersion) && array_key_exists('VERSION', $arModuleVersion)) {
-            $this->MODULE_VERSION = $arModuleVersion['VERSION'];
-            $this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
-        }
+        $this->MODULE_VERSION = $arModuleVersion['VERSION'];
+        $this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
     }
 }
