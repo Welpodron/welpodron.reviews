@@ -8,6 +8,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
 use Bitrix\Main\Config\Option;
 
+// TODO: Rework!
+Loader::includeModule('welpodron.reviews');
+
 class WelpodronElementRating extends CBitrixComponent
 {
     const MODULE_ID = "welpodron.reviews";
@@ -30,6 +33,10 @@ class WelpodronElementRating extends CBitrixComponent
 
         $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
         $arParams['IBLOCK_ID'] = intval(Option::get(self::MODULE_ID, 'IBLOCK_ID'));
+
+        $arParams['CACHE_TYPE'] = "N";
+        $arParams['CACHE_TIME'] = "0";
+        $arParams['CACHE_GROUPS'] = "N";
 
         return $arParams;
     }
@@ -68,7 +75,18 @@ class WelpodronElementRating extends CBitrixComponent
                 $arRatingsGroups[$arObj['PROPERTY_RATING_VALUE']] = $arRatingsGroups[$arObj['PROPERTY_RATING_VALUE']] + intval($arObj['CNT']);
             }
 
-            return ['RATINGS_BY_GROUPS' => $arRatingsGroups, 'RATINGS_TOTAL_AMOUNT' => $totalRatingsAmount, 'RATINGS_TOTAL_SUM' => $totalRatingsSum, 'RATING_VALUE_CALCULATED' => $totalRatingsSum / $totalRatingsAmount];
+            $ratingResult = null;
+
+            if ($totalRatingsAmount && $totalRatingsSum) {
+                $ratingResult = round($totalRatingsSum / $totalRatingsAmount, 1);
+            }
+
+            return [
+                'RATINGS_BY_GROUPS' => $arRatingsGroups,
+                'RATINGS_TOTAL_AMOUNT' => $totalRatingsAmount,
+                'RATINGS_TOTAL_SUM' => $totalRatingsSum,
+                'RATING_VALUE_CALCULATED' => $ratingResult
+            ];
         }
     }
 }

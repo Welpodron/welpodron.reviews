@@ -9,7 +9,8 @@ use Bitrix\Main\FileTable;
 use Bitrix\Main\Context;
 use Bitrix\Main\Config\Option;
 
-// TODO: Добавить ответы от менеджера
+// TODO: Rework!
+Loader::includeModule('welpodron.reviews');
 
 class WelpodronReviewsList extends CBitrixComponent
 {

@@ -8,6 +8,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\UrlManager;
 
+// TODO: Rework!
+Loader::includeModule('welpodron.reviews');
+
 class WelpodronReviewsForm extends CBitrixComponent
 {
     const MODULE_ID = "welpodron.reviews";
@@ -29,6 +32,9 @@ class WelpodronReviewsForm extends CBitrixComponent
         }
 
         $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
+        $arParams['CACHE_TYPE'] = "N";
+        $arParams['CACHE_TIME'] = "0";
+        $arParams['CACHE_GROUPS'] = "N";
 
         return $arParams;
     }

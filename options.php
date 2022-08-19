@@ -11,7 +11,7 @@ Loader::includeModule("iblock");
 
 $request = Context::getCurrent()->getRequest();
 
-$dbIblocks = CIBlock::GetList([], ['TYPE' => welpodron_reviews::IBLOCK_TYPE]);
+$dbIblocks = CIBlock::GetList([], ['TYPE' => welpodron_reviews::DEFAULT_IBLOCK_TYPE]);
 
 $arIblocks['-1'] = 'Выберете инфоблок';
 

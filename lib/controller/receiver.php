@@ -8,6 +8,7 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Context;
 
 // TODO: Добавить отправку письма
 
@@ -41,6 +42,14 @@ class Receiver extends Controller
             }
 
             $request = $this->getRequest();
+            $server = Context::getCurrent()->getServer();
+            $userAgent = $request->getUserAgent();
+            $userId = CurrentUser::get()->getId();
+            $userIp = $request->getRemoteAddress();
+            $page = $server->get('HTTP_REFERER');
+            $sessionId = bitrix_sessid();
+
+            return 1;
 
             $postRawValue = $request->getFile('images');
 

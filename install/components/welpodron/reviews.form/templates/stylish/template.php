@@ -17,7 +17,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $ratingFieldId = 'field_' . md5(uniqid('', false));
 $photosFieldId = 'field_' . md5(uniqid('', false));
+// FUCKING css CACHE FIX 
 ?>
+<link href="<?= $templateFolder . "/style.css" ?>" type="text/css" rel="stylesheet" />
 
 <button class="reviews-form-add-dialog-btn-open" type="button" data-dialog-native-id="<?= $arResult['DIALOG_ID'] ?>" data-dialog-native-action="showModal">Оставить заявку</button>
 
@@ -102,7 +104,7 @@ $photosFieldId = 'field_' . md5(uniqid('', false));
         </div>
     </form>
     <script>
-        new WelpodronDialogNative(document.querySelector('#<?= $arResult['DIALOG_ID'] ?>'));
-        new WelpodronForm(document.querySelector('#<?= $arResult['FORM_ID'] ?>'));
+        new welpodon.dialogNative(document.querySelector('#<?= $arResult['DIALOG_ID'] ?>'));
+        new welpodon.forms.form(document.querySelector('#<?= $arResult['FORM_ID'] ?>'));
     </script>
 </dialog>

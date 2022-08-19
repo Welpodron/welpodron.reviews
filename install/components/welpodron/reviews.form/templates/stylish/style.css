@@ -235,31 +235,6 @@
   justify-content: center;
 }
 
-/* Js styles */
-
-[data-files-dropzone-zone] > * {
-  pointer-events: none;
-}
-
-[data-files-dropzone-drop-display] {
-  display: block;
-}
-
-[data-files-dropzone-dropping-display] {
-  display: none;
-}
-
-/* Js styles dialog */
-
-[data-dialog-native]:not([open]) {
-  pointer-events: none;
-  opacity: 0;
-}
-
-[data-dialog-native] {
-  display: block;
-}
-
 @keyframes reviews-form-add-dialog-slide-in-up-animation {
   from {
     transform: translateY(20px);
