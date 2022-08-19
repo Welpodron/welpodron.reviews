@@ -16,7 +16,6 @@ $arSortFields = [
 
 $arComponentParameters = [
     'PARAMETERS' => [
-        'AJAX_MODE' => [],
         'ELEMENTS_PER_PAGE' => [
             'PARENT' => 'BASE',
             'NAME' => 'Количетсво элементов на страницу',

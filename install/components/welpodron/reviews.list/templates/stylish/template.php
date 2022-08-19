@@ -15,6 +15,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var string $componentPath */
 /** @var WelpodronReviewsList $component */
 
+// FUCKING css CACHE FIX 
+?>
+<link href="<?= $templateFolder . "/style.css" ?>" type="text/css" rel="stylesheet" />
+<?
+
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $postRating = $request->get('rating');
 $postOrder = $request->get('order') ? $request->get('order') : $arParams['FIRST_SORT_FIELD'] . ':' . $arParams['FIRST_SORT_ORDER'];
@@ -33,7 +38,6 @@ $formPaginationId = 'form_' . md5(uniqid('', false));
 if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
     $APPLICATION->RestartBuffer();
     while (@ob_end_clean()) {
-        // FUCK YOU BITRIX  
     }
 }
 ?>
@@ -41,24 +45,22 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
 <? if (!$postAjaxCall) : ?>
     <div class="reviews-list" id="comp_<?= $bxajaxid ?>">
     <? endif; ?>
-    <form class="reviews-list__filter" id="<?= $formFilterId ?>" method="POST">
-        <!-- AJAX v2 -->
+    <form class="reviews-list-filter" id="<?= $formFilterId ?>" method="POST">
         <input type="hidden" name="bxajaxid" value="<?= $bxajaxid ?>">
         <input type="hidden" name="AJAX_CALL" value="Y">
-        <!-- AJAX v2 -->
         <input name="reviewsamount" value="0" type="hidden" />
-        <label class="reviews-list__filter-field">
-            <span class="reviews-list__filter-field-name">Сортировать по:</span>
-            <select class="reviews-list__select" name="order">
+        <label class="reviews-list-filter-field">
+            <span class="reviews-list-filter-field-name">Сортировать по:</span>
+            <select class="reviews-list-filter-field-select" name="order">
                 <option <?= $postOrder == "property_rating:desc" ? 'selected' : '' ?> value="property_rating:desc">Оценка по убыванию</option>
                 <option <?= $postOrder == "property_rating:asc" ? 'selected' : '' ?> value="property_rating:asc">Оценка по возрастанию</option>
                 <option <?= $postOrder == "created:desc" ? 'selected' : '' ?> value="created:desc">Новые</option>
                 <option <?= $postOrder == "created:asc" ? 'selected' : '' ?> value="created:asc">Старые</option>
             </select>
         </label>
-        <label class="reviews-list__filter-field">
-            <span class="reviews-list__filter-field-name">Оценка:</span>
-            <select class="reviews-list__select" name="rating">
+        <label class="reviews-list-filter-field">
+            <span class="reviews-list-filter-field-name">Оценка:</span>
+            <select class="reviews-list-filter-field-select" name="rating">
                 <option value="">Любая</option>
                 <option <?= $postRating == "5" ? 'selected' : '' ?> value="5">5 звезд</option>
                 <option <?= $postRating == "4" ? 'selected' : '' ?> value="4">4 звезды</option>
@@ -67,31 +69,41 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
                 <option <?= $postRating == "1" ? 'selected' : '' ?> value="1">1 звезда</option>
             </select>
         </label>
-        <label class="reviews-list__filter-field">
-            <span class="reviews-list__filter-field-name">С фото:</span>
-            <input class="reviews-list__checkbox" <?= $request->get('images') == "1" ? 'checked' : '' ?> type="checkbox" name="images" value="1" />
+        <label class="reviews-list-filter-field">
+            <span class="reviews-list-filter-field-name">С фото:</span>
+            <input class="reviews-list-filter-field-checkbox" <?= $request->get('images') == "1" ? 'checked' : '' ?> type="checkbox" name="images" value="1" />
         </label>
     </form>
 
     <script>
         document.querySelector('#<?= $formFilterId ?>').onchange = (evt) => {
-            fetch(window.location.href, {
+            BX.ajax({
+                url: `${window.location.pathname}?&bxajaxid=<?= $bxajaxid ?>`,
+                data: Object.fromEntries(new FormData(evt.currentTarget)),
                 method: 'POST',
-                body: new FormData(evt.currentTarget)
-            }).then((response) => {
-                return response.text();
-            }).then((html) => {
-                responseObj = BX.processHTML(html);
-                document.querySelector('#comp_<?= $bxajaxid ?>').innerHTML = responseObj.HTML;
-                BX.ajax.processScripts(responseObj.SCRIPT, true);
-                BX.ajax.processScripts(responseObj.SCRIPT, false);
-            }).catch((err) => {
-                console.error(err);
-            })
+                dataType: 'html',
+                timeout: 0,
+                async: true,
+                preparePost: true,
+                lsTimeout: 30,
+                processData: false,
+                scriptsRunFirst: false,
+                emulateOnload: true,
+                start: true,
+                cache: false,
+                onsuccess: (data) => {
+                    responseObj = BX.processHTML(data);
+                    document.querySelector('#comp_<?= $bxajaxid ?>').innerHTML = responseObj.HTML;
+                    BX.ajax.processScripts(responseObj.SCRIPT, true);
+                    BX.ajax.processScripts(responseObj.SCRIPT, false);
+                },
+                onfailure: (err) => {
+                    console.log(err);
+                }
+            });
         }
     </script>
-
-    <div class="reviews-list__items">
+    <div class="reviews-list-items">
         <? foreach ($arResult['ITEMS'] as $arItem) : ?>
             <?
             $this->AddEditAction(
@@ -106,10 +118,10 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
                 ['CONFIRM' => 'Будет удалена вся информация, связанная с этой записью. Продолжить?']
             );
             ?>
-            <div class="reviews-list__item" itemprop="review" itemscope itemtype="https://schema.org/Review" id="<?= $this->GetEditAreaId($arItem['FIELDS']['ID']); ?>">
-                <div class="reviews-list__rating">
+            <div class="reviews-list-items-item" itemprop="review" itemscope itemtype="https://schema.org/Review" id="<?= $this->GetEditAreaId($arItem['FIELDS']['ID']); ?>">
+                <div class="rating-stars">
                     <span itemprop="reviewRating" style="display: none;"><?= $arItem['PROPS']['rating']['VALUE'] ?></span>
-                    <div class="reviews-list__rating-current" style="width:calc(<?= $arItem['PROPS']['rating']['VALUE'] ?> * 20%)"></div>
+                    <div class="rating-stars-current" style="width:calc(<?= $arItem['PROPS']['rating']['VALUE'] ?> * 20%)"></div>
                 </div>
                 <p itemprop="author"><?= $arItem['PROPS']['author']['VALUE'] ?></p>
                 <p itemprop="datePublished" content="<?= $arItem['FIELDS']['DATE_CREATE'] ?>"><?= $arItem['FIELDS']['DATE_CREATE'] ?></p>
@@ -132,15 +144,15 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
                 <? if ($arItem['PROPS']['images']['VALUE']) : ?>
                     <div>
                         <p>Фотографии:</p>
-                        <div class="reviews-list__images">
+                        <div class="reviews-list-items-item-images">
                             <? foreach ($arItem['PROPS']['images']['VALUE'] as $reviewImage) : ?>
-                                <img class="reviews-list__img" src="<?= $reviewImage['SRC'] ?>" />
+                                <img class="reviews-list-items-item-images-img" src="<?= $reviewImage['SRC'] ?>" />
                             <? endforeach; ?>
                         </div>
                     </div>
                 <? endif; ?>
                 <? if ($arItem['PROPS']['responce_text']['VALUE']) : ?>
-                    <div class="reviews-list__responce">
+                    <div class="reviews-list-items-item-responce">
                         <p>Менеджер Ольга</p>
                         <p><?= $arItem['PROPS']['responce_text']['VALUE'] ?></p>
                     </div>
@@ -152,32 +164,41 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
     <? if ($arResult['NAV_RESULT']["NavRecordCount"] > 1) : ?>
         <? if ($arResult['NAV_RESULT']["NavPageSize"] < $arResult['NAV_RESULT']["NavRecordCount"]) : ?>
             <form id="<?= $formPaginationId ?>" method="POST">
-                <!-- AJAX v2 -->
                 <input type="hidden" name="bxajaxid" value="<?= $bxajaxid ?>">
                 <input type="hidden" name="AJAX_CALL" value="Y">
-                <!-- AJAX v2 -->
                 <input name="order" value="<?= array_key_first($arResult['CURRENT_FILTER']['ORDER']) . ':' . $arResult['CURRENT_FILTER']['ORDER'][array_key_first($arResult['CURRENT_FILTER']['ORDER'])] ?>" type="hidden" />
                 <input name="rating" value="<?= $arResult['CURRENT_FILTER']['FILTER']['PROPERTY_rating'] ?>" type="hidden" />
                 <input name="images" value="<?= $arResult['CURRENT_FILTER']['FILTER']['PROPERTY_rating'] ?>" type="hidden" />
                 <input name="reviewsamount" value="<?= $arResult['NAV_RESULT']["NavPageSize"] + intval($arParams['ELEMENTS_PER_PAGE']) ?>" type="hidden" />
-                <button class="reviews-list__show-more">Показать еще</button>
+                <button class="reviews-list-btn-show-more">Показать еще</button>
             </form>
             <script>
                 document.querySelector('#<?= $formPaginationId ?>').onsubmit = (evt) => {
                     evt.preventDefault();
-                    fetch(window.location.href, {
+                    BX.ajax({
+                        url: `${window.location.pathname}?&bxajaxid=<?= $bxajaxid ?>`,
+                        data: Object.fromEntries(new FormData(evt.currentTarget)),
                         method: 'POST',
-                        body: new FormData(evt.currentTarget)
-                    }).then((response) => {
-                        return response.text();
-                    }).then((html) => {
-                        responseObj = BX.processHTML(html);
-                        document.querySelector('#comp_<?= $bxajaxid ?>').innerHTML = responseObj.HTML;
-                        BX.ajax.processScripts(responseObj.SCRIPT, true);
-                        BX.ajax.processScripts(responseObj.SCRIPT, false);
-                    }).catch((err) => {
-                        console.error(err);
-                    })
+                        dataType: 'html',
+                        timeout: 0,
+                        async: true,
+                        preparePost: true,
+                        lsTimeout: 30,
+                        processData: false,
+                        scriptsRunFirst: false,
+                        emulateOnload: true,
+                        start: true,
+                        cache: false,
+                        onsuccess: (data) => {
+                            responseObj = BX.processHTML(data);
+                            document.querySelector('#comp_<?= $bxajaxid ?>').innerHTML = responseObj.HTML;
+                            BX.ajax.processScripts(responseObj.SCRIPT, true);
+                            BX.ajax.processScripts(responseObj.SCRIPT, false);
+                        },
+                        onfailure: (err) => {
+                            console.log(err);
+                        }
+                    });
                 }
             </script>
         <? endif ?>

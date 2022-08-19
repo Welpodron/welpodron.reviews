@@ -8,6 +8,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\UrlManager;
 
+use Bitrix\Main\Page\Asset;
+
 // TODO: Rework!
 Loader::includeModule('welpodron.reviews');
 
@@ -36,6 +38,9 @@ class WelpodronReviewsForm extends CBitrixComponent
         $arParams['CACHE_TIME'] = "0";
         $arParams['CACHE_GROUPS'] = "N";
 
+        $arParams['USE_CAPTCHA'] = Option::get(self::MODULE_ID, 'USE_CAPTCHA');
+        $arParams['GOOGLE_CAPTCHA_PUBLIC_KEY'] = Option::get(self::MODULE_ID, 'GOOGLE_CAPTCHA_PUBLIC_KEY');
+
         return $arParams;
     }
 
@@ -46,6 +51,10 @@ class WelpodronReviewsForm extends CBitrixComponent
         $CONTROLLER = "receiver";
         $CONTROLLER_ACTION = "save";
         $FORM_ACTION_URL = UrlManager::getInstance()->create($MODULE_ID . '.' . $CONTROLLER . '.' . $CONTROLLER_ACTION);
+
+        if ($this->arParams['USE_CAPTCHA'] == "Y") {
+            Asset::getInstance()->addString('<script src="https://www.google.com/recaptcha/api.js?render=explicit"></script>');
+        }
 
         return [
             'FORM_ID' => 'form_' . md5(uniqid('', false)),

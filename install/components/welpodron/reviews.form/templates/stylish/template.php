@@ -24,7 +24,7 @@ $photosFieldId = 'field_' . md5(uniqid('', false));
 <button class="reviews-form-add-dialog-btn-open" type="button" data-dialog-native-id="<?= $arResult['DIALOG_ID'] ?>" data-dialog-native-action="showModal">Оставить заявку</button>
 
 <dialog id="<?= $arResult['DIALOG_ID'] ?>" class="reviews-form-add-dialog" data-dialog-native>
-    <form action="<?= $arResult['ACTION_URL'] ?>" class="reviews-form-add" id="<?= $arResult['FORM_ID'] ?>">
+    <form <?= ($arParams['USE_CAPTCHA'] == "Y" ? 'data-captcha="' . $arParams['GOOGLE_CAPTCHA_PUBLIC_KEY'] . '"' : '') ?> action="<?= $arResult['ACTION_URL'] ?>" class="reviews-form-add" id="<?= $arResult['FORM_ID'] ?>">
         <div class="reviews-form-add-dialog-header">
             <p class="reviews-form-add-dialog-title">Оставить отзыв</p>
             <button data-dialog-native-id="<?= $arResult['DIALOG_ID'] ?>" data-dialog-native-action="close" class="reviews-form-add-dialog-btn-close" type="button" aria-label="Закрыть окно">
@@ -98,6 +98,9 @@ $photosFieldId = 'field_' . md5(uniqid('', false));
             </div>
             <p>* - обязательные для заполнения поля</p>
             <p>Нажимая на кнопку "Отправить отзыв", вы соглашаетесь с условиями <a href="https://centr-mebel.com/publichnaya-oferta/">Обработки персональных данных</a></p>
+            <? if ($arParams['USE_CAPTCHA'] == "Y") : ?>
+                <div data-captcha-container></div>
+            <? endif; ?>
         </div>
         <div class="reviews-form-add-dialog-footer">
             <button type="submit" class="reviews-form-add-btn-send">Отправить отзыв</button>

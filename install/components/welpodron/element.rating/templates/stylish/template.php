@@ -22,7 +22,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 <? if ($arResult['RATINGS_TOTAL_AMOUNT']) : ?>
     <div class="element-rating">
-        <p class="element-rating-calculated"><?= $arResult['RATING_VALUE_CALCULATED'] ?> <span class="element-rating__from">из 5</span></p>
+        <p class="element-rating-calculated"><?= $arResult['RATING_VALUE_CALCULATED'] ?> <span class="element-rating-from">из 5</span></p>
         <div class="rating-stars">
             <div class="rating-stars-current" style="width:calc(<?= $arResult['RATING_VALUE_CALCULATED'] ?> * 20%)"></div>
         </div>

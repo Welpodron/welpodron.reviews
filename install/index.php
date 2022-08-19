@@ -4,10 +4,11 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Context;
+use Bitrix\Main\Config\Option;
 
 IncludeModuleLangFile(__FILE__);
 
-class welpodron_reviews extends \CModule
+class welpodron_reviews extends CModule
 {
     const DEFAULT_IBLOCK_TYPE = "welpodron_reviews";
     const DEFAULT_EVENT_TYPE = 'WELPODRON_REVIEWS_FEEDBACK';
@@ -33,6 +34,10 @@ class welpodron_reviews extends \CModule
             return false;
         }
 
+        if (!$this->InstallOptions()) {
+            return false;
+        }
+
         ModuleManager::registerModule($this->MODULE_ID);
 
         $APPLICATION->IncludeAdminFile('Установка модуля ' . $this->MODULE_ID, __DIR__ . '/step.php');
@@ -49,6 +54,7 @@ class welpodron_reviews extends \CModule
         } elseif ($request->get("step") == 2) {
             $this->UnInstallFiles();
             $this->UnInstallEvents();
+            $this->UnInstallOptions();
             // По умолчанию БД не удаляется 
 
             if ($request->get("savedata") != "Y")
@@ -57,6 +63,36 @@ class welpodron_reviews extends \CModule
             ModuleManager::unRegisterModule($this->MODULE_ID);
             $APPLICATION->IncludeAdminFile('Деинсталляция модуля ' . $this->MODULE_ID, __DIR__ . '/unstep2.php');
         }
+    }
+
+    public function InstallOptions()
+    {
+        global $APPLICATION;
+
+        try {
+            foreach ($this->DEFAULT_OPTIONS as $optionName => $optionValue) {
+                Option::set($this->MODULE_ID, $optionName, $optionValue);
+            }
+        } catch (\Throwable $th) {
+            $APPLICATION->ThrowException($th->getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public function UnInstallOptions()
+    {
+        global $APPLICATION;
+
+        try {
+            foreach ($this->DEFAULT_OPTIONS as $optionName => $optionValue) {
+                Option::delete($this->MODULE_ID, ['name' => $optionName]);
+            }
+        } catch (\Throwable $th) {
+            $APPLICATION->ThrowException($th->getMessage());
+            return false;
+        }
+        return true;
     }
 
     public function InstallEvents()
@@ -83,14 +119,14 @@ class welpodron_reviews extends \CModule
                     'NAME' => 'Добавление отзыва',
                     'EVENT_TYPE' => 'email',
                     'DESCRIPTION'  => '
-                    #FORM_ID# - ID Формы 
-                    #SCHEMA_ID# - ID Схемы
                     #USER_ID# - ID Пользователя
                     #SESSION_ID# - Сессия пользователя
                     #IP# - IP Адрес пользователя
                     #PAGE# - Страница отправки
                     #USER_AGENT# - UserAgent
-                    #PAYLOAD# - Содержимое заявки
+                    #AUTHOR# - Автор отзыва
+                    #COMMENT# - Текст отзыва
+                    #ELEMENT_ID# - ID Товара
                     #EMAIL_TO# - Email получателя письма
                     '
                 ]);
@@ -120,31 +156,36 @@ class welpodron_reviews extends \CModule
                     'LID' => $siteId,
                     'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
                     'EMAIL_TO' => '#EMAIL_TO#',
-                    'SUBJECT' => '#SITE_NAME#: Сообщение из формы обратной связи',
+                    'SUBJECT' => '#SITE_NAME#: Добавлен отзыв на товар',
                     'BODY_TYPE' => 'html',
-                    // 'LANGUAGE_ID' => SITE_ID,
                     'MESSAGE' => '
                     <!DOCTYPE html>
                     <html lang="ru">
                     <head>
                     <meta charset="utf-8">
-                    <title>Новая заявка</title>
+                    <title>Новый отзыв</title>
                     </head>
                     <body>
                     <p>
-                    Вам было отправлено сообщение через форму обратной связи
+                    На сайте был добавлен отзыв, ожидающий проверки
                     </p>
                     <p>
-                    Содержимое заявки:
+                    ID товара:
                     </p>
                     <p>
-                    #PAYLOAD#
+                    #ELEMENT_ID#
                     </p>
                     <p>
-                    ID формы через которую была получена заявка: #FORM_ID#
+                    Автор отзыва:
                     </p>
                     <p>
-                    ID используемой схемы: #SCHEMA_ID#
+                    #AUTHOR#
+                    </p>
+                    <p>
+                    Содержимое отзыва:
+                    </p>
+                    <p>
+                    #COMMENT#
                     </p>
                     <p>
                     Отправлено пользователем: #USER_ID#
@@ -180,6 +221,10 @@ class welpodron_reviews extends \CModule
                 }
             }
         }
+
+        $this->DEFAULT_OPTIONS['USE_NOTIFY'] = "Y";
+        $this->DEFAULT_OPTIONS['NOTIFY_TYPE'] = self::DEFAULT_EVENT_TYPE;
+        $this->DEFAULT_OPTIONS['NOTIFY_EMAIL'] = Option::get('main', 'email_from');
 
         return true;
     }
@@ -251,6 +296,7 @@ class welpodron_reviews extends \CModule
         }
 
         // Попытаться найти хотя бы один инфоблок
+        $iblockId = null;
         $firstFoundIblock = CIBlock::GetList([], ['TYPE' => self::DEFAULT_IBLOCK_TYPE])->Fetch();
 
         if (!$firstFoundIblock) {
@@ -353,7 +399,11 @@ class welpodron_reviews extends \CModule
                     $DB->Commit();
                 }
             }
+        } else {
+            $iblockId = $firstFoundIblock['ID'];
         }
+
+        $this->DEFAULT_OPTIONS['IBLOCK_ID'] = $iblockId;
 
         return true;
     }
@@ -398,5 +448,14 @@ class welpodron_reviews extends \CModule
 
         $this->MODULE_VERSION = $arModuleVersion['VERSION'];
         $this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
+
+        $this->DEFAULT_OPTIONS = [
+            'MAX_FILES_AMOUNT' => 3,
+            'MAX_FILE_SIZE' => 5,
+            'BANNED_SYMBOLS' => '<,>,&,*,^,%,$,`,~,#',
+            'USE_CAPTCHA' => 'N',
+            'GOOGLE_CAPTCHA_SECRET_KEY' => '',
+            'GOOGLE_CAPTCHA_PUBLIC_KEY' => ''
+        ];
     }
 }

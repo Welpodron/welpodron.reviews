@@ -3,12 +3,15 @@
 namespace Welpodron\Reviews\Controller;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Context;
+use Bitrix\Main\Mail\Event;
+use Bitrix\Main\Web\HttpClient;
 
 // TODO: Добавить отправку письма
 
@@ -16,6 +19,8 @@ class Receiver extends Controller
 {
     const FIELD_VALIDATION_ERROR_CODE = "FIELD_VALIDATION_ERROR";
     const FORM_GENERAL_ERROR_CODE = "FORM_GENERAL_ERROR";
+    const MODULE_ID = "welpodron.reviews";
+    const DEFAULT_GOOGLE_URL = "https://www.google.com/recaptcha/api/siteverify";
 
     protected function getDefaultPreFilters()
     {
@@ -26,30 +31,42 @@ class Receiver extends Controller
     {
         global $APPLICATION;
         try {
-            $MODULE_ID = "welpodron.reviews";
+            $request = $this->getRequest();
 
-            $maxFileSize = intval(Option::get($MODULE_ID, 'MAX_FILE_SIZE')) * 1024 * 1024;
-            $maxFilesAmount = intval(Option::get($MODULE_ID, 'MAX_FILES_AMOUNT'));
-            $iblock = intval(Option::get($MODULE_ID, 'IBLOCK_ID'));
+            $useCaptcha = Option::get(self::MODULE_ID, 'USE_CAPTCHA') == "Y";
+
+            // Сразу же проверяем капчу 
+            if ($useCaptcha) {
+                $captchaToken = $request->getPost("g-recaptcha-response");
+
+                if (!$captchaToken) {
+                    throw new \Exception('Ожидался токен от капчи. Запрос должен иметь заполненное POST поле: "g-recaptcha-response"');
+                }
+
+                $secretCaptchaKey = Option::get(self::MODULE_ID, 'GOOGLE_CAPTCHA_SECRET_KEY');
+
+                $httpClient = new HttpClient();
+                $googleCaptchaResponse = Json::decode($httpClient->post(self::DEFAULT_GOOGLE_URL, ['secret' => $secretCaptchaKey, 'response' => $captchaToken], true));
+
+                if (!$googleCaptchaResponse['success']) {
+                    throw new \Exception('Произошла ошибка при попытке обработать ответ от сервера капчи, проверьте задан ли параметр "GOOGLE_CAPTCHA_SECRET_KEY" в настройках модуля');
+                }
+            }
+
+            $useNotify = Option::get(self::MODULE_ID, 'USE_NOTIFY') == "Y";
+
+            $maxFileSize = intval(Option::get(self::MODULE_ID, 'MAX_FILE_SIZE')) * 1024 * 1024;
+            $maxFilesAmount = intval(Option::get(self::MODULE_ID, 'MAX_FILES_AMOUNT'));
+            $iblock = intval(Option::get(self::MODULE_ID, 'IBLOCK_ID'));
 
             $bannedSymbols = [];
-            $bannedSymbolsRaw = preg_split('/(\s*,*\s*)*,+(\s*,*\s*)*/', trim(strval(Option::get($MODULE_ID, 'BANNED_SYMBOLS'))));
+            $bannedSymbolsRaw = preg_split('/(\s*,*\s*)*,+(\s*,*\s*)*/', trim(strval(Option::get(self::MODULE_ID, 'BANNED_SYMBOLS'))));
             if ($bannedSymbolsRaw) {
                 $bannedSymbolsRawFiltered = array_filter($bannedSymbolsRaw, function ($value) {
                     return $value !== null && $value !== '';
                 });
                 $bannedSymbols = array_values($bannedSymbolsRawFiltered);
             }
-
-            $request = $this->getRequest();
-            $server = Context::getCurrent()->getServer();
-            $userAgent = $request->getUserAgent();
-            $userId = CurrentUser::get()->getId();
-            $userIp = $request->getRemoteAddress();
-            $page = $server->get('HTTP_REFERER');
-            $sessionId = bitrix_sessid();
-
-            return 1;
 
             $postRawValue = $request->getFile('images');
 
@@ -58,7 +75,7 @@ class Receiver extends Controller
             };
 
             if (!$iblock) {
-                throw new \Exception('Неверно указано значение ID инфоблока в настройках модуля "' . $MODULE_ID . '" , текущее значение: "' . $iblock . '" ожидалось число большее нуля');
+                throw new \Exception('Неверно указано значение ID инфоблока в настройках модуля "' . self::MODULE_ID . '" , текущее значение: "' . $iblock . '" ожидалось число большее нуля');
             }
 
             $res = \CIBlock::GetProperties($iblock, [], ["CHECK_PERMISSIONS" => "N"]);
@@ -195,6 +212,38 @@ class Receiver extends Controller
 
             if (!$result) {
                 throw new \Exception($el->LAST_ERROR);
+            }
+
+            if ($useNotify) {
+                $server = Context::getCurrent()->getServer();
+                $userAgent = $request->getUserAgent();
+                $userId = CurrentUser::get()->getId();
+                $userIp = $request->getRemoteAddress();
+                $page = $server->get('HTTP_REFERER');
+                $sessionId = bitrix_sessid();
+
+                $arData = [
+                    'USER_ID' => intval($userId),
+                    'SESSION_ID' => strval($sessionId),
+                    'IP' => strval($userIp),
+                    'PAGE' => strval($page),
+                    'USER_AGENT' => strval($userAgent),
+                    'AUTHOR' => $arValidProps['author'],
+                    'COMMENT' => $arValidProps['comment'],
+                    'ELEMENT_ID' => $arValidProps['element'],
+                ];
+
+                $notifyEvent = Option::get(self::MODULE_ID, 'NOTIFY_TYPE');
+                $notifyEmail = Option::get(self::MODULE_ID, 'NOTIFY_EMAIL');
+                $notifyResult = Event::send([
+                    'EVENT_NAME' => $notifyEvent,
+                    'LID' => Context::getCurrent()->getSite(),
+                    'C_FIELDS' => array_merge($arData, ['EMAIL_TO' => $notifyEmail]),
+                ]);
+
+                if (!$notifyResult->isSuccess()) {
+                    throw new \Exception(implode(", ", $notifyResult->getErrorMessages()));
+                }
             }
 
             ob_start();

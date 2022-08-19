@@ -829,18 +829,19 @@
     constructor(element, config = {}) {
       this.element = element;
 
+      // TODO: errorsEl и successEl можно генерить если их нет и автоматически добавлять в форму как и в случае с капчей?
+      this.errorsEl =
+        config.errorsEl || this.element.querySelector("[data-form-errors]");
+
+      this.successEl =
+        config.successEl || this.element.querySelector("[data-form-success]");
+
       if (this.element.getAttribute("data-allow-default") == null) {
         this.element.removeEventListener("reset", this.handleReset);
         this.element.addEventListener("reset", this.handleReset);
         this.element.removeEventListener("submit", this.handleSubmit);
         this.element.addEventListener("submit", this.handleSubmit);
       }
-
-      this.errorsEl =
-        config.errorsEl || this.element.querySelector("[data-form-errors]");
-
-      this.successEl =
-        config.successEl || this.element.querySelector("[data-form-success]");
 
       this.action = this.element.action;
       this.fieldsets = [];
@@ -856,7 +857,51 @@
       this.fieldsets.forEach((fieldset) => {
         this.fields = [...this.fields, ...fieldset.getFieldsFlat()];
       });
+
+      this.captchaSiteKey = this.element.getAttribute("data-captcha");
+      if (this.captchaSiteKey != null) {
+        // В случае если никаких контейнеров не найдено то рендерим капчу прямо в начало формы
+        this.captchaContainerEl =
+          config.captchaContainerEl ||
+          this.element.querySelector("[data-captcha-container]");
+
+        if (!this.captchaContainerEl) {
+          this.captchaContainerEl = document.createElement("div");
+          this.captchaContainerEl.setAttribute("data-captcha-container", "");
+          this.element.insertBefore(
+            this.captchaContainerEl,
+            this.element.firstChild
+          );
+        }
+
+        this.captchaLoaded = this.getDefferedPromise();
+
+        if (grecaptcha) {
+          grecaptcha.ready(() => {
+            // Пока грузится капча блочим всю форму
+            this.disable();
+            this.captchaLoaded.resolve();
+          });
+        }
+
+        this.captchaLoaded.then(() => {
+          // Капча загрузилась и произошел рендер делаем анблок формы
+          this.widgetCaptchaId = grecaptcha.render(this.captchaContainerEl, {
+            sitekey: this.captchaSiteKey,
+          });
+          this.enable();
+        });
+      }
     }
+
+    getDefferedPromise = () => {
+      let resolver, promise;
+      promise = new Promise((resolve, reject) => {
+        resolver = resolve;
+      });
+      promise.resolve = resolver;
+      return promise;
+    };
 
     // Thanks to therealparmesh / object-to-formdata
     // Source: https://github.com/therealparmesh/object-to-formdata
@@ -979,8 +1024,8 @@
       return fd;
     };
 
-    getData = () => {
-      const data = [];
+    getData = (customData = []) => {
+      const data = [...customData];
 
       this.fieldsets.forEach((fieldset) => {
         let dataObj = {};
@@ -996,8 +1041,8 @@
       return Object.assign({}, ...data);
     };
 
-    getFormData = () => {
-      return this.serialize(this.getData());
+    getFormData = (customData = []) => {
+      return this.serialize(this.getData(customData));
     };
 
     isHTML = (str) => {
@@ -1029,11 +1074,27 @@
 
       // TODO: disable all fields
       if (this.action) {
+        if (this.disabled) {
+          return;
+        }
+
         this.disable();
+
+        let customData = [];
+
+        if (this.widgetCaptchaId != null) {
+          customData = [
+            {
+              "g-recaptcha-response": grecaptcha.getResponse(
+                this.widgetCaptchaId
+              ),
+            },
+          ];
+        }
 
         fetch(this.action, {
           method: "POST",
-          body: this.getFormData(),
+          body: this.getFormData(customData),
         })
           .then((responce) => {
             return responce.json();
@@ -1094,12 +1155,14 @@
     };
 
     disable = () => {
+      this.disabled = true;
       this.fields.forEach((field) => {
         field.disable();
       });
     };
 
     enable = () => {
+      this.disabled = false;
       this.fields.forEach((field) => {
         field.enable();
       });
@@ -1109,6 +1172,9 @@
       this.fields.forEach((field) => {
         field.reset();
       });
+      if (this.widgetCaptchaId != null) {
+        grecaptcha.reset(this.widgetCaptchaId);
+      }
     };
 
     send = () => {

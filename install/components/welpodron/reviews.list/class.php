@@ -40,6 +40,10 @@ class WelpodronReviewsList extends CBitrixComponent
 
         $arParams['ELEMENTS_PER_PAGE'] = intval($arParams['ELEMENTS_PER_PAGE']);
 
+        $arParams['CACHE_TYPE'] = "N";
+        $arParams['CACHE_TIME'] = "0";
+        $arParams['CACHE_GROUPS'] = "N";
+
         return $arParams;
     }
 

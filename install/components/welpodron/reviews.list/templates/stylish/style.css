@@ -1,32 +1,32 @@
-.reviews-list__filter {
+.reviews-list-filter {
   display: flex;
   flex-wrap: wrap;
 }
 
-.reviews-list__item {
+.reviews-list-items-item {
   margin: 10px 0;
   padding: 20px;
   box-shadow: 0 1px 5px rgba(107, 114, 128, 0.25);
 }
 
-.reviews-list__responce {
+.reviews-list-items-item-responce {
   padding: 20px;
   background: rgba(107, 114, 128, 0.05);
   box-shadow: 0 1px 5px rgba(107, 114, 128, 0.25);
 }
 
-.reviews-list__filter-field {
+.reviews-list-filter-field {
   display: flex;
   align-items: center;
   margin: 5px;
   font-weight: normal;
 }
 
-.reviews-list__filter-field-name {
+.reviews-list-filter-field-name {
   margin-right: 10px;
 }
 
-.reviews-list__show-more {
+.reviews-list-btn-show-more {
   border: 1.5px solid transparent;
   border-radius: 0.3rem;
   padding: 20px 25px;
@@ -39,16 +39,16 @@
   color: #fff;
 }
 
-.reviews-list__select {
+.reviews-list-filter-field-select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   border: 1.5px solid transparent;
   border-radius: 4px;
   padding: 8px;
-
-  font-family: inherit;
-
+  font: inherit;
+  color: inherit;
+  background-color: #fff;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 8px center;
   background-repeat: no-repeat;
@@ -60,7 +60,7 @@
   box-shadow: 0 1px 5px rgba(107, 114, 128, 0.25);
 }
 
-.reviews-list__checkbox {
+.reviews-list-filter-field-checkbox {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -87,7 +87,7 @@
   box-shadow: 0 0.5px 5px rgba(107, 114, 128, 0.25);
 }
 
-.reviews-list__checkbox:checked {
+.reviews-list-filter-field-checkbox:checked {
   background-color: currentColor;
   background-size: 100% 100%;
   background-position: center;
@@ -95,45 +95,12 @@
   background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
 }
 
-.reviews-list__rating {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: row-reverse;
-
-  height: 20px;
-  width: 110px;
-  flex: 0 0 110px;
-
-  margin-bottom: 20px;
-
-  position: relative;
-  color: blue;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23cdcdcd'%3E%3Cpath d='M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z' /%3E%3C/svg%3E")
-    0 repeat-x;
-  background-size: 22px 20px !important;
-}
-
-.reviews-list__rating-current {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0;
-  height: auto;
-  max-width: 100%;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2355bc51'%3E%3Cpath d='M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z' /%3E%3C/svg%3E")
-    0 repeat-x;
-  background-size: 22px 20px !important;
-}
-
-.reviews-list__images {
+.reviews-list-items-item-images {
   display: flex;
   flex-wrap: wrap;
 }
 
-.reviews-list__img {
+.reviews-list-items-item-images-img {
   display: block;
   width: 120px;
   height: 120px;

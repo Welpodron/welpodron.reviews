@@ -1,5 +1,5 @@
 <?
-$MESS["WELPODRON_REVIEWS_MODULE_NAME"] = "Модуль отзывы";
+$MESS["WELPODRON_REVIEWS_MODULE_NAME"] = "Отзывы (welpodron.reviews)";
 $MESS["WELPODRON_REVIEWS_MODULE_DESC"] = "Модуль позволяющий добавлять отзывы к элементам инфоблока";
 $MESS["WELPODRON_REVIEWS_PARTNER_NAME"] = "Welpodron";
 $MESS["WELPODRON_REVIEWS_PARTNER_URI"] = "https://github.com/Welpodron/";
