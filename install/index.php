@@ -5,6 +5,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\IO\Directory;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -429,9 +430,9 @@ class welpodron_reviews extends CModule
 
     public function UnInstallFiles()
     {
-        DeleteDirFilesEx(Application::getDocumentRoot() . '/local/components/welpodron/reviews.list');
-        DeleteDirFilesEx(Application::getDocumentRoot() . '/local/components/welpodron/reviews.form');
-        DeleteDirFilesEx(Application::getDocumentRoot() . '/local/components/welpodron/element.rating');
+        Directory::deleteDirectory(Application::getDocumentRoot() . '/local/components/welpodron/reviews.list');
+        Directory::deleteDirectory(Application::getDocumentRoot() . '/local/components/welpodron/reviews.form');
+        Directory::deleteDirectory(Application::getDocumentRoot() . '/local/components/welpodron/element.rating');
     }
 
     public function __construct()

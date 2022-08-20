@@ -13,8 +13,6 @@ Loader::includeModule($moduleId);
 Loader::includeModule("iblock");
 
 $request = Context::getCurrent()->getRequest();
-// welpodron_reviews::$DEFAULT_OPTIONS['WTF'] = 1;
-// var_dump(welpodron_reviews::$DEFAULT_OPTIONS);
 
 $dbIblocks = CIBlock::GetList([], ['TYPE' => welpodron_reviews::DEFAULT_IBLOCK_TYPE]);
 

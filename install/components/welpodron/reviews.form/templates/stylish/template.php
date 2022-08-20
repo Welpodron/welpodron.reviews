@@ -21,7 +21,7 @@ $photosFieldId = 'field_' . md5(uniqid('', false));
 ?>
 <link href="<?= $templateFolder . "/style.css" ?>" type="text/css" rel="stylesheet" />
 
-<button class="reviews-form-add-dialog-btn-open" type="button" data-dialog-native-id="<?= $arResult['DIALOG_ID'] ?>" data-dialog-native-action="showModal">Оставить заявку</button>
+<button class="reviews-form-add-dialog-btn-open" type="button" data-dialog-native-id="<?= $arResult['DIALOG_ID'] ?>" data-dialog-native-action="showModal">Оставить отзыв</button>
 
 <dialog id="<?= $arResult['DIALOG_ID'] ?>" class="reviews-form-add-dialog" data-dialog-native>
     <form <?= ($arParams['USE_CAPTCHA'] == "Y" ? 'data-captcha="' . $arParams['GOOGLE_CAPTCHA_PUBLIC_KEY'] . '"' : '') ?> action="<?= $arResult['ACTION_URL'] ?>" class="reviews-form-add" id="<?= $arResult['FORM_ID'] ?>">

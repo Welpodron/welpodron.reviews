@@ -1,6 +1,8 @@
 .element-rating {
   margin: 10px 0;
   padding: 20px;
+  display: grid;
+  gap: 10px;
   box-shadow: 0 1px 5px rgba(107, 114, 128, 0.25);
 }
 
@@ -9,7 +11,6 @@
   font-size: 66px;
   color: #242e35;
   line-height: 1;
-  margin: 0 0 20px 0;
 }
 
 .element-rating-reviews-total {
@@ -35,7 +36,6 @@
 .element-rating-group {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
 }
 
 .element-rating-group-counter {
