@@ -19,7 +19,7 @@ $dialogId = 'dialog_' . md5(uniqid('', false));
     </div>
 
     <script>
-        new welpodon.dialogNative(document.querySelector("#<?= $dialogId ?>"));
+        new welpodron.dialogNative(document.querySelector("#<?= $dialogId ?>"));
     </script>
 
     <style>

@@ -5,10 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $arComponentParameters = [
     'PARAMETERS' => [
-        'ELEMENT_ID' => [
+        'ELEMENT_ARTIKUL' => [
             'PARENT' => 'DATA_SOURCE',
-            'NAME' => 'ID Элемента',
+            'NAME' => 'Артикул элемента',
             'TYPE' => 'TEXT',
-        ]
+        ],
+        // 'ELEMENT_ID' => [
+        //     'PARENT' => 'DATA_SOURCE',
+        //     'NAME' => 'ID Элемента',
+        //     'TYPE' => 'TEXT',
+        // ],
     ]
 ];

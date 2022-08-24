@@ -1,7 +1,7 @@
 (() => {
   // Core EXT
 
-  window.welpodon = window.welpodon || {};
+  window.welpodron = window.welpodron || {};
 
   class WelpodronDialogNative {
     constructor(element, config = {}) {
@@ -133,15 +133,15 @@
     };
   }
 
-  welpodon.dialogNative = WelpodronDialogNative;
+  welpodron.dialogNative = WelpodronDialogNative;
 
   // Core EXT end
 
   // Forms API
 
-  window.welpodon = window.welpodon || {};
+  window.welpodron = window.welpodron || {};
 
-  welpodon.forms = {};
+  welpodron.forms = {};
 
   class FormField {
     constructor(element, control) {
@@ -189,9 +189,9 @@
     };
   }
 
-  welpodon.forms.formField = FormField;
+  welpodron.forms.formField = FormField;
 
-  class FormFilesDropzoneField extends welpodon.forms.formField {
+  class FormFilesDropzoneField extends welpodron.forms.formField {
     defaultConfig = {
       showcaseElSelector: "[data-files-dropzone-showcase]",
       dropzoneElSelector: "[data-files-dropzone-zone]",
@@ -503,9 +503,9 @@
     };
   }
 
-  welpodon.forms.formFilesDropzoneField = FormFilesDropzoneField;
+  welpodron.forms.formFilesDropzoneField = FormFilesDropzoneField;
 
-  class FormImputable extends welpodon.forms.formField {
+  class FormImputable extends welpodron.forms.formField {
     constructor(element, control) {
       super(element, control);
 
@@ -602,7 +602,7 @@
     };
   }
 
-  welpodon.forms.formImputable = FormImputable;
+  welpodron.forms.formImputable = FormImputable;
 
   class FormRadiosGroupField {
     constructor(element) {
@@ -686,75 +686,75 @@
     };
   }
 
-  welpodon.forms.formRadiosGroupField = FormRadiosGroupField;
+  welpodron.forms.formRadiosGroupField = FormRadiosGroupField;
 
   class FormFieldsFactory {
     create = (element) => {
       switch (element.getAttribute("data-form-field-type")) {
         case "hidden":
-          return new welpodon.forms.formField(
+          return new welpodron.forms.formField(
             element,
             element.querySelector('input[type="hidden"]')
           );
         case "text":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector('input[type="text"]')
           );
         case "number":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector('input[type="number"]')
           );
         case "email":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector('input[type="email"]')
           );
         case "tel":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector('input[type="tel"]')
           );
         case "checkbox":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector('input[type="checkbox"]')
           );
         case "radio":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector('input[type="radio"]')
           );
         case "file":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector('input[type="file"]')
           );
         case "textarea":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector("textarea")
           );
         case "select":
-          return new welpodon.forms.formImputable(
+          return new welpodron.forms.formImputable(
             element,
             element.querySelector("select")
           );
         // Dropzone update
         case "filesDropzone":
-          return new welpodon.forms.formFilesDropzoneField(
+          return new welpodron.forms.formFilesDropzoneField(
             element,
             element.querySelector('input[type="file"]')
           );
         // Radios update
         case "radios":
-          return new welpodon.forms.formRadiosGroupField(element);
+          return new welpodron.forms.formRadiosGroupField(element);
       }
     };
   }
 
-  welpodon.forms.formFieldsFactory = new FormFieldsFactory();
+  welpodron.forms.formFieldsFactory = new FormFieldsFactory();
 
   class FormFieldset {
     constructor(element) {
@@ -780,7 +780,7 @@
           `[data-form-field-name][data-form-field-type][data-form-field]:not(:scope [data-form-fieldset] *)`
         )
         .forEach((element) => {
-          let instance = welpodon.forms.formFieldsFactory.create(element);
+          let instance = welpodron.forms.formFieldsFactory.create(element);
 
           if (instance) {
             this.fields.push(instance);
@@ -823,7 +823,7 @@
     };
   }
 
-  welpodon.forms.formFieldset = FormFieldset;
+  welpodron.forms.formFieldset = FormFieldset;
 
   class Form {
     constructor(element, config = {}) {
@@ -849,7 +849,7 @@
       [...this.element.querySelectorAll("[data-form-fieldset]")]
         .filter((el) => !el.parentElement.closest("[data-form-fieldset]"))
         .forEach((el) => {
-          this.fieldsets.push(new welpodon.forms.formFieldset(el));
+          this.fieldsets.push(new welpodron.forms.formFieldset(el));
         });
 
       this.fields = [];
@@ -1191,7 +1191,7 @@
     };
   }
 
-  welpodon.forms.form = Form;
+  welpodron.forms.form = Form;
 
   // Forms API END
 })();

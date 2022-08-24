@@ -18,7 +18,7 @@ $dialogId = 'dialog_' . md5(uniqid('', false));
         <button data-dialog-native-action="close" data-dialog-native-id="<?= $dialogId ?>" class="reviews-form-add-dialog-success-btn-close" type="button">Хорошо</button>
     </div>
     <script>
-        new welpodon.dialogNative(document.querySelector("#<?= $dialogId ?>"));
+        new welpodron.dialogNative(document.querySelector("#<?= $dialogId ?>"));
     </script>
     <style>
         .reviews-form-add-dialog-success {

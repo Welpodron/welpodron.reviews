@@ -33,7 +33,8 @@ class WelpodronReviewsForm extends CBitrixComponent
             return [];
         }
 
-        $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
+        // $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
+        $arParams['ELEMENT_ARTIKUL'] = $arParams['ELEMENT_ARTIKUL'];
         $arParams['CACHE_TYPE'] = "N";
         $arParams['CACHE_TIME'] = "0";
         $arParams['CACHE_GROUPS'] = "N";

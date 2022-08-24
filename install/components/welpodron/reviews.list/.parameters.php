@@ -10,7 +10,8 @@ $arSortDirections = [
     'desc' => 'По убыванию'
 ];
 $arSortFields = [
-    'created' => 'По времени создания',
+    // 'created' => 'По времени создания',
+    'property_date' => 'По времени создания',
     'property_rating' => 'По рейтингу',
 ];
 
@@ -22,16 +23,22 @@ $arComponentParameters = [
             'TYPE' => 'TEXT',
             'DEFAULT' => 3,
         ],
-        'ELEMENT_ID' => [
+        'ELEMENT_ARTIKUL' => [
             'PARENT' => 'DATA_SOURCE',
-            'NAME' => 'ID Элемента',
+            'NAME' => 'Артикул элемента',
             'TYPE' => 'TEXT',
         ],
+        // 'ELEMENT_ID' => [
+        //     'PARENT' => 'DATA_SOURCE',
+        //     'NAME' => 'ID Элемента',
+        //     'TYPE' => 'TEXT',
+        // ],
         'FIRST_SORT_FIELD' => [
             'PARENT' => 'DATA_SOURCE',
             'NAME' => 'Первое поле для сортировки',
             'TYPE' => 'LIST',
-            'DEFAULT' => 'created',
+            // 'DEFAULT' => 'created',
+            'DEFAULT' => 'property_date',
             'VALUES' => $arSortFields,
             'ADDITIONAL_VALUES' => 'Y'
         ],

@@ -13,6 +13,8 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Mail\Event;
 use Bitrix\Main\Web\HttpClient;
 
+use Bitrix\Main\Type\DateTime;
+
 // TODO: Добавить отправку письма
 
 class Receiver extends Controller
@@ -199,11 +201,17 @@ class Receiver extends Controller
                 }
             }
 
+            $timestamp = (new DateTime())->format("d.m.Y H:i:s");
+
+            $defaultPropsValues = [
+                'date' => $timestamp,
+            ];
+
             $arFields = [
-                "IBLOCK_ID" => $iblock,
-                'NAME' => 'Отзыв: ' . time(),
+                'IBLOCK_ID' => $iblock,
+                'NAME' => 'Артикул товара: ' . $arValidProps['artikul'] . ' Автор: ' . $arValidProps['author'] . ' Дата: ' . $timestamp,
                 'ACTIVE' => 'N',
-                'PROPERTY_VALUES' => $arValidProps
+                'PROPERTY_VALUES' => array_merge($arValidProps, $defaultPropsValues)
             ];
 
             $el = new \CIBlockElement;
@@ -230,7 +238,8 @@ class Receiver extends Controller
                     'USER_AGENT' => strval($userAgent),
                     'AUTHOR' => $arValidProps['author'],
                     'COMMENT' => $arValidProps['comment'],
-                    'ELEMENT_ID' => $arValidProps['element'],
+                    // 'ELEMENT_ID' => $arValidProps['element'],
+                    'ELEMENT_ARTIKUL' => $arValidProps['artikul'],
                 ];
 
                 $notifyEvent = Option::get(self::MODULE_ID, 'NOTIFY_TYPE');

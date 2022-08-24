@@ -128,7 +128,7 @@ class welpodron_reviews extends CModule
                         #USER_AGENT# - UserAgent
                         #AUTHOR# - Автор отзыва
                         #COMMENT# - Текст отзыва
-                        #ELEMENT_ID# - ID Товара
+                        #ELEMENT_ARTIKUL# - Артикул товара
                         #EMAIL_TO# - Email получателя письма
                         '
                     ]);
@@ -172,10 +172,10 @@ class welpodron_reviews extends CModule
                         На сайте был добавлен отзыв, ожидающий проверки
                         </p>
                         <p>
-                        ID товара:
+                        Артикул товара:
                         </p>
                         <p>
-                        #ELEMENT_ID#
+                        #ELEMENT_ARTIKUL#
                         </p>
                         <p>
                         Автор отзыва:
@@ -243,7 +243,7 @@ class welpodron_reviews extends CModule
         }
 
         foreach ($arSites as $siteId) {
-            $dbMess = CEventMessage::GetList('id', 'desc', ['SITE_ID' => $siteId, 'TYPE_ID' => self::DEFAULT_EVENT_TYPE]);
+            $dbMess = CEventMessage::GetList($by = "id", $order = "desc", ['SITE_ID' => $siteId, 'TYPE_ID' => self::DEFAULT_EVENT_TYPE]);
             $arMess = $dbMess->Fetch();
             CEventMessage::Delete($arMess['ID']);
         }
@@ -339,12 +339,25 @@ class welpodron_reviews extends CModule
 
                 $arProps = [
                     [
-                        "NAME" => "Элемент",
-                        "CODE" => "element",
-                        "PROPERTY_TYPE" => "E",
+                        "NAME" => "Артикул элемента",
+                        "CODE" => "artikul",
                         "IS_REQUIRED" => "Y",
                         "IBLOCK_ID" => $iblockId
                     ],
+                    [
+                        "NAME" => "Дата публикации отзыва",
+                        "CODE" => "date",
+                        "PROPERTY_TYPE" => "S",
+                        "USER_TYPE" => "DateTime",
+                        "IBLOCK_ID" => $iblockId
+                    ],
+                    // [
+                    //     "NAME" => "Элемент",
+                    //     "CODE" => "element",
+                    //     "PROPERTY_TYPE" => "E",
+                    //     "IS_REQUIRED" => "Y",
+                    //     "IBLOCK_ID" => $iblockId
+                    // ],
                     [
                         "NAME" => "Оценка",
                         "CODE" => "rating",
@@ -355,16 +368,22 @@ class welpodron_reviews extends CModule
                     [
                         "NAME" => "Достоинства",
                         "CODE" => "advantages",
+                        "USER_TYPE" => "",
+                        "ROW_COUNT" => 3,
                         "IBLOCK_ID" => $iblockId
                     ],
                     [
                         "NAME" => "Недостатки",
                         "CODE" => "disadvantages",
+                        "USER_TYPE" => "",
+                        "ROW_COUNT" => 3,
                         "IBLOCK_ID" => $iblockId
                     ],
                     [
                         "NAME" => "Комментарий",
                         "CODE" => "comment",
+                        "USER_TYPE" => "",
+                        "ROW_COUNT" => 3,
                         "IS_REQUIRED" => "Y",
                         "IBLOCK_ID" => $iblockId
                     ],
@@ -385,6 +404,8 @@ class welpodron_reviews extends CModule
                     [
                         "NAME" => "Ответ",
                         "CODE" => "responce_text",
+                        "USER_TYPE" => "",
+                        "ROW_COUNT" => 3,
                         "IBLOCK_ID" => $iblockId
                     ],
                 ];

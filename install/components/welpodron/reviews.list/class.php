@@ -32,7 +32,8 @@ class WelpodronReviewsList extends CBitrixComponent
             return [];
         }
 
-        $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
+        // $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
+        $arParams['ELEMENT_ARTIKUL'] = $arParams['ELEMENT_ARTIKUL'];
         $arParams['IBLOCK_ID'] = intval(Option::get(self::MODULE_ID, 'IBLOCK_ID'));
 
         $arParams['FIRST_SORT_FIELD'] = strtolower(trim($arParams['FIRST_SORT_FIELD']));
@@ -49,13 +50,14 @@ class WelpodronReviewsList extends CBitrixComponent
 
     protected function getElements()
     {
-        if ($this->arParams['IBLOCK_ID'] > 0 && $this->arParams['ELEMENT_ID'] > 0) {
+        if ($this->arParams['IBLOCK_ID'] > 0 /* && $this->arParams['ELEMENT_ID'] > 0*/) {
             $arFilter = [
                 'IBLOCK_ID' => $this->arParams['IBLOCK_ID'],
                 'SITE_ID' => Context::getCurrent()->getSite(),
                 'CHECK_PERMISSIONS' => 'N',
                 'ACTIVE' => 'Y',
-                'PROPERTY_element' => $this->arParams['ELEMENT_ID']
+                // 'PROPERTY_element' => $this->arParams['ELEMENT_ID']
+                'PROPERTY_artikul' => $this->arParams['ELEMENT_ARTIKUL']
             ];
             $arOrder = [];
             $arGroup = false;

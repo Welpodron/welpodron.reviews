@@ -24,8 +24,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <? if ($arResult['RATINGS_TOTAL_AMOUNT']) : ?>
         <p class="element-rating-calculated"><?= $arResult['RATING_VALUE_CALCULATED'] ?> <span class="element-rating-from">из 5</span></p>
     <? endif; ?>
-    <div class="rating-stars">
-        <div class="rating-stars-current" style="width:calc(<?= $arResult['RATING_VALUE_CALCULATED'] ?> * 20%)"></div>
+    <div class="rating-stars-container">
+        <div class="rating-stars">
+            <div class="rating-stars-current" style="width:calc(<?= $arResult['RATING_VALUE_CALCULATED'] ? $arResult['RATING_VALUE_CALCULATED'] : 0 ?> * 20%)"></div>
+        </div>
+        <? if ($arResult['RATINGS_TOTAL_AMOUNT']) : ?>
+            <span>(<?= $arResult['RATINGS_TOTAL_AMOUNT'] ?>)</span>
+        <? endif; ?>
     </div>
     <? if ($arResult['RATINGS_TOTAL_AMOUNT']) : ?>
         <p class="element-rating-reviews-total">Рейтинг на основе <?= $arResult['RATINGS_TOTAL_AMOUNT'] ?> отзывов</p>
@@ -77,7 +82,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         "stylish",
         array(
             "COMPONENT_TEMPLATE" => "stylish",
-            "ELEMENT_ID" => $arParams['ELEMENT_ID']
+            "ELEMENT_ARTIKUL" => $arParams['ELEMENT_ARTIKUL']
+            // "ELEMENT_ID" => $arParams['ELEMENT_ID']
         )
     ); ?>
 </div>

@@ -54,8 +54,8 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
             <select class="reviews-list-filter-field-select" name="order">
                 <option <?= $postOrder == "property_rating:desc" ? 'selected' : '' ?> value="property_rating:desc">Оценка по убыванию</option>
                 <option <?= $postOrder == "property_rating:asc" ? 'selected' : '' ?> value="property_rating:asc">Оценка по возрастанию</option>
-                <option <?= $postOrder == "created:desc" ? 'selected' : '' ?> value="created:desc">Новые</option>
-                <option <?= $postOrder == "created:asc" ? 'selected' : '' ?> value="created:asc">Старые</option>
+                <option <?= $postOrder == "property_date:desc" ? 'selected' : '' ?> value="property_date:desc">Новые</option>
+                <option <?= $postOrder == "property_date:asc" ? 'selected' : '' ?> value="property_date:asc">Старые</option>
             </select>
         </label>
         <label class="reviews-list-filter-field">
@@ -124,7 +124,7 @@ if ($postAjaxCall && $postBxAjaxId && $postBxAjaxId == $bxajaxid) {
                     <div class="rating-stars-current" style="width:calc(<?= $arItem['PROPS']['rating']['VALUE'] ?> * 20%)"></div>
                 </div>
                 <p itemprop="author"><?= $arItem['PROPS']['author']['VALUE'] ?></p>
-                <p itemprop="datePublished" content="<?= $arItem['FIELDS']['DATE_CREATE'] ?>"><?= $arItem['FIELDS']['DATE_CREATE'] ?></p>
+                <p itemprop="datePublished" content="<?= $arItem['PROPS']['date']['VALUE'] ?>"><?= $arItem['PROPS']['date']['VALUE'] ?></p>
                 <? if ($arItem['PROPS']['advantages']['VALUE']) : ?>
                     <div>
                         <p>Достоинства:</p>
