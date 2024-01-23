@@ -208,6 +208,20 @@ class welpodron_reviews extends CModule
                         "IBLOCK_ID" => $firstIblockId
                     ],
                     [
+                        "NAME" => "Дата публикации отзыва",
+                        "CODE" => "date",
+                        "PROPERTY_TYPE" => "S",
+                        "USER_TYPE" => "DateTime",
+                        "IBLOCK_ID" => $iblockId
+                    ],
+                    // [
+                    //     "NAME" => "Элемент",
+                    //     "CODE" => "element",
+                    //     "PROPERTY_TYPE" => "E",
+                    //     "IS_REQUIRED" => "Y",
+                    //     "IBLOCK_ID" => $iblockId
+                    // ],
+                    [
                         "NAME" => "Оценка",
                         "CODE" => "rating",
                         "PROPERTY_TYPE" => "N",
