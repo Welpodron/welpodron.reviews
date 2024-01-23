@@ -4,9 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $arComponentDescription = [
-    'NAME' => 'Форма добавления отзыва',
-    'DESCRIPTION' => 'Форма добавления отзыва',
-    'ICON' => '/images/photo_view.gif',
+    'NAME' => 'Отзывы элемента',
+    'DESCRIPTION' => 'Отзывы элемента',
     'CACHE_PATH' => 'Y',
     'PATH' => [
         'ID' => 'welpodron',

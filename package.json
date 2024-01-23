@@ -1,0 +1,25 @@
+{
+    "name": "welpodron.reviews",
+    "version": "1.0.0",
+    "scripts": {
+      "build:module": "node build.mjs"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/Welpodron/welpodron.reviews.git"
+    },
+    "keywords": [
+      "bitrix"
+    ],
+    "author": "welpodron",
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/Welpodron/welpodron.reviews/issues"
+    },
+    "homepage": "https://github.com/Welpodron/welpodron.reviews#readme",
+    "devDependencies": {
+      "archiver": "^6.0.1",
+      "fast-glob": "^3.3.2"
+    }
+  }
+  

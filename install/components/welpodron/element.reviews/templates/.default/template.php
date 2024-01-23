@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @var WelpodronReviewsList $component */
+/** @var WelpodronElementReviews $component */
 ?>
 
 <pre>

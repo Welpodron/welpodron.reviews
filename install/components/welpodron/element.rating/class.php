@@ -1,6 +1,6 @@
 <?
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+if (!defined('B_PROLOG_INCLUDED') || constant('B_PROLOG_INCLUDED') !== true) {
     die();
 }
 
@@ -8,8 +8,15 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
 use Bitrix\Main\Config\Option;
 
-// TODO: Rework!
-Loader::includeModule('welpodron.reviews');
+use Bitrix\Iblock\ElementPropertyTable;
+use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\PropertyTable;
+use Bitrix\Main\FileTable;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Expression;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\Engine\CurrentUser;
 
 class WelpodronElementRating extends CBitrixComponent
 {
@@ -17,10 +24,25 @@ class WelpodronElementRating extends CBitrixComponent
 
     public function executeComponent()
     {
-        // Кэширование данного компонента отключено по-умолчанию
-        $this->arResult = $this->getRating();
+        if ($this->startResultCache($this->arParams['CACHE_TIME'] ? $this->arParams['CACHE_TIME'] : false)) {
+            $this->arResult = $this->getRating();
 
-        $this->includeComponentTemplate();
+            if (!($this->arParams['PRODUCT_NUMBER']) || $this->arParams['PROPERTY_RATING_ID'] <= 0 || $this->arParams['PROPERTY_PRODUCT_NUMBER_ID'] <= 0) {
+                $this->AbortResultCache();
+            }
+
+            if (!$this->arResult) {
+                $this->AbortResultCache();
+            }
+
+            if (!($this->arParams["USE_TEMPLATE"]) && $this->arParams["CACHE_TYPE"] != "N" && $this->arParams['CACHE_TIME']) {
+                $this->AbortResultCache();
+            }
+
+            if ($this->arParams["USE_TEMPLATE"]) {
+                $this->includeComponentTemplate();
+            }
+        }
 
         return $this->arResult;
     }
@@ -31,64 +53,101 @@ class WelpodronElementRating extends CBitrixComponent
             return [];
         }
 
-        // $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
-        $arParams['ELEMENT_ARTIKUL'] = $arParams['ELEMENT_ARTIKUL'];
-        $arParams['IBLOCK_ID'] = intval(Option::get(self::MODULE_ID, 'IBLOCK_ID'));
+        if (!$arParams['PRODUCT_NUMBER']) {
+            return [];
+        }
 
-        $arParams['CACHE_TYPE'] = "N";
-        $arParams['CACHE_TIME'] = "0";
-        $arParams['CACHE_GROUPS'] = "N";
+        $arParams['PRODUCT_NUMBER'] = strval($arParams['PRODUCT_NUMBER']);
+        //! Id свойства рейтинг элемента из инфоблока ОТЗЫВОВ!
+        $arParams['PROPERTY_RATING_ID'] = intval($arParams['PROPERTY_RATING_ID']);
+
+        if ($arParams['PROPERTY_RATING_ID'] <= 0) {
+            return [];
+        }
+
+        //! Id свойства артикул элемента из инфоблока ОТЗЫВОВ!
+        $arParams['PROPERTY_PRODUCT_NUMBER_ID'] = intval($arParams['PROPERTY_PRODUCT_NUMBER_ID']);
+
+        if ($arParams['PROPERTY_PRODUCT_NUMBER_ID'] <= 0) {
+            return [];
+        }
 
         return $arParams;
     }
 
     protected function getRating()
     {
-        if ($this->arParams['IBLOCK_ID'] > 0 /* && $this->arParams['ELEMENT_ID'] > 0 */) {
-            $arFilter = [
-                'IBLOCK_ID' => $this->arParams['IBLOCK_ID'],
-                'SITE_ID' => Context::getCurrent()->getSite(),
-                'CHECK_PERMISSIONS' => 'N',
-                'ACTIVE' => 'Y',
-                // 'PROPERTY_element' => $this->arParams['ELEMENT_ID']
-                'PROPERTY_artikul' => $this->arParams['ELEMENT_ARTIKUL']
-            ];
-            $arOrder = [];
-            $arGroup = ['PROPERTY_rating'];
-            $arNav = false;
-            $arSelect = ['IBLOCK_ID', 'ID', 'PROPERTY_rating'];
-
-            $dbElements = CIBlockElement::GetList($arOrder, $arFilter, $arGroup, $arNav, $arSelect);
-
-            $totalRatingsAmount = 0; // Можно использовать CIBlockElement с параметром подсчета элементов вместо отдельной переменной
-            $totalRatingsSum = 0;
-
-            $arRatingsGroups = [
-                '5' => 0,
-                '4' => 0,
-                '3' => 0,
-                '2' => 0,
-                '1' => 0
-            ];
-
-            while ($arObj = $dbElements->Fetch()) {
-                $totalRatingsAmount += intval($arObj['CNT']);
-                $totalRatingsSum += intval($arObj['PROPERTY_RATING_VALUE']) * intval($arObj['CNT']);
-                $arRatingsGroups[$arObj['PROPERTY_RATING_VALUE']] = $arRatingsGroups[$arObj['PROPERTY_RATING_VALUE']] + intval($arObj['CNT']);
+        try {
+            if (!Loader::includeModule('iblock')) {
+                throw new Exception('Не удалось подключить модуль инфоблоков');
             }
 
-            $ratingResult = null;
+            if ($this->arParams['PRODUCT_NUMBER'] && $this->arParams['PROPERTY_RATING_ID'] > 0 && $this->arParams['PROPERTY_PRODUCT_NUMBER_ID'] > 0) {
+                $query = ElementPropertyTable::query();
+                $query->setSelect([
+                    'RATING',
+                    'CNT'
+                ]);
+                $query->setGroup([
+                    'IBLOCK_PROPERTY_ID'
+                ]);
+                $query->registerRuntimeField(
+                    new ExpressionField(
+                        'RATING',
+                        'AVG(%s)',
+                        'VALUE'
+                    )
+                );
+                $query->registerRuntimeField(
+                    new ExpressionField(
+                        'CNT',
+                        'COUNT(%s)',
+                        'VALUE'
+                    )
+                );
+                $query->registerRuntimeField(
+                    new Reference(
+                        'ep_t',
+                        ElementPropertyTable::class,
+                        Join::on('this.IBLOCK_ELEMENT_ID', 'ref.IBLOCK_ELEMENT_ID')
+                    )
+                );
+                $query->registerRuntimeField(
+                    new Reference(
+                        'e_t',
+                        ElementTable::class,
+                        Join::on('this.IBLOCK_ELEMENT_ID', 'ref.ID')
+                    )
+                );
+                $query->where("e_t.ACTIVE", 'Y');
+                $query->where("ep_t.VALUE", $this->arParams['PRODUCT_NUMBER']);
+                //! Id свойства артикул элемента из инфоблока ОТЗЫВОВ!
+                $query->where("ep_t.IBLOCK_PROPERTY_ID", $this->arParams['PROPERTY_PRODUCT_NUMBER_ID']);
+                //! Id свойства рейтинг элемента из инфоблока ОТЗЫВОВ!
+                $query->where('IBLOCK_PROPERTY_ID', $this->arParams['PROPERTY_RATING_ID']);
 
-            if ($totalRatingsAmount && $totalRatingsSum) {
-                $ratingResult = round($totalRatingsSum / $totalRatingsAmount, 1);
+                if (!($this->arParams["USE_TEMPLATE"]) && $this->arParams["CACHE_TYPE"] != "N" && $this->arParams['CACHE_TIME']) {
+                    $query->setCacheTtl($this->arParams['CACHE_TIME']);
+                    $query->cacheJoins(true);
+                }
+
+                $dbResult = $query->exec()->fetch();
+
+                if ($dbResult) {
+                    return [
+                        'RATING' => floatval($dbResult['RATING']),
+                        'CNT' => intval($dbResult['CNT'])
+                    ];
+                }
             }
-
-            return [
-                'RATINGS_BY_GROUPS' => $arRatingsGroups,
-                'RATINGS_TOTAL_AMOUNT' => $totalRatingsAmount,
-                'RATINGS_TOTAL_SUM' => $totalRatingsSum,
-                'RATING_VALUE_CALCULATED' => $ratingResult
-            ];
+        } catch (\Throwable $th) {
+            if (CurrentUser::get()->isAdmin()) {
+                $this->__showError($th->getMessage(), $th->getCode());
+                echo '<br><br>';
+                $this->__showError($th->getTraceAsString());
+            }
         }
+
+        return [];
     }
 }
