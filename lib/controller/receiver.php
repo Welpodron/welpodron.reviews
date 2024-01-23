@@ -439,12 +439,29 @@ class Receiver extends Controller
             $useNotify = Option::get(self::DEFAULT_MODULE_ID, 'USE_NOTIFY') == "Y";
 
             if ($useNotify) {
+                $server = Context::getCurrent()->getServer();
+                $userAgent = $request->getUserAgent();
+                $userId = CurrentUser::get()->getId();
+                $userIp = $request->getRemoteAddress();
+                $page = $server->get('HTTP_REFERER');
+                $sessionId = bitrix_sessid();
+
+                $arDataUser = [
+                    'USER_ID' => intval($userId),
+                    'SESSION_ID' => strval($sessionId),
+                    'IP' => strval($userIp),
+                    'PAGE' => strval($page),
+                    'USER_AGENT' => strval($userAgent),
+                ];
+
+                $arDataMerged = array_merge($arDataValid, $arDataUser);
+
                 $notifyEvent = Option::get(self::DEFAULT_MODULE_ID, 'NOTIFY_TYPE');
                 $notifyEmail = Option::get(self::DEFAULT_MODULE_ID, 'NOTIFY_EMAIL');
                 $notifyResult = MailEvent::send([
                     'EVENT_NAME' => $notifyEvent,
                     'LID' => Context::getCurrent()->getSite(),
-                    'C_FIELDS' => array_merge($arDataValid, ['EMAIL_TO' => $notifyEmail]),
+                    'C_FIELDS' => array_merge($arDataMerged, ['EMAIL_TO' => $notifyEmail]),
                 ]);
 
                 if (!$notifyResult->isSuccess()) {

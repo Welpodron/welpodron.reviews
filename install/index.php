@@ -16,6 +16,169 @@ class welpodron_reviews extends CModule
     private $DEFAULT_OPTIONS = [];
 
     const DEFAULT_IBLOCK_TYPE = "welpodron_reviews";
+    const DEFAULT_MAIL_EVENT_TYPE = 'WELPODRON_REVIEWS';
+
+    public function InstallManagerMailEvents()
+    {
+        global $APPLICATION, $DB;
+
+        try {
+            $dbSites = CSite::GetList($by = "sort", $order = "desc");
+            while ($arSite = $dbSites->Fetch()) {
+                $arSites[] = $arSite["LID"];
+            }
+
+            foreach ($arSites as $siteId) {
+                $dbEt = CEventType::GetByID(self::DEFAULT_MAIL_EVENT_TYPE, $siteId);
+                $arEt = $dbEt->Fetch();
+
+                if (!$arEt) {
+                    $et = new CEventType;
+
+                    $DB->StartTransaction();
+
+                    $et = $et->Add([
+                        'LID' => $siteId,
+                        'EVENT_NAME' => self::DEFAULT_MAIL_EVENT_TYPE,
+                        'NAME' => 'Добавление отзыва',
+                        'EVENT_TYPE' => 'email',
+                        'DESCRIPTION'  => '
+                        #USER_ID# - ID Пользователя
+                        #SESSION_ID# - Сессия пользователя
+                        #IP# - IP Адрес пользователя
+                        #PAGE# - Страница отправки
+                        #USER_AGENT# - UserAgent
+                        #author# - Автор отзыва
+                        #review# - Текст отзыва
+                        #rating# - Рейтинг отзыва
+                        #product_number# - Артикул элемента
+                        #EMAIL_TO# - Email получателя письма
+                        '
+                    ]);
+
+                    if (!$et) {
+                        $DB->Rollback();
+
+                        $APPLICATION->ThrowException('Не удалось создать почтовое событие' . $APPLICATION->LAST_ERROR);
+
+                        return false;
+                    } else {
+                        $DB->Commit();
+                    }
+                }
+
+                $dbMess = CEventMessage::GetList($by = "id", $order = "desc", ['SITE_ID' => $siteId, 'TYPE_ID' => self::DEFAULT_MAIL_EVENT_TYPE]);
+                $arMess = $dbMess->Fetch();
+
+                if (!$arMess) {
+                    $mess = new CEventMessage;
+
+                    $DB->StartTransaction();
+
+                    $messId = $mess->Add([
+                        'ACTIVE' => 'Y',
+                        'EVENT_NAME' => self::DEFAULT_MAIL_EVENT_TYPE,
+                        'LID' => $siteId,
+                        'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+                        'EMAIL_TO' => '#EMAIL_TO#',
+                        'SUBJECT' => '#SITE_NAME#: Добавлен отзыв',
+                        'BODY_TYPE' => 'html',
+                        'MESSAGE' => '
+                        <!DOCTYPE html>
+                        <html lang="ru">
+                        <head>
+                        <meta charset="utf-8">
+                        <title>Новый отзыв</title>
+                        </head>
+                        <body>
+                        <p>
+                        На сайте был оформлен новый отзыв, ожидающий проверки
+                        </p>
+                        <p>
+                        Артикул товара:
+                        </p>
+                        <p>
+                        #product_number#
+                        </p>
+                        <p>
+                        Автор отзыва:
+                        </p>
+                        <p>
+                        #author#
+                        </p>
+                        <p>
+                        Содержимое отзыва:
+                        </p>
+                        <p>
+                        #review#
+                        </p>
+                        <p>
+                        Рейтинг отзыва:
+                        </p>
+                        <p>
+                        #rating#
+                        </p>
+                        <p>
+                        Отправлено пользователем: #USER_ID#
+                        </p>
+                        <p>
+                        Сессия пользователя: #SESSION_ID#
+                        </p>
+                        <p>
+                        IP адрес отправителя: #IP#
+                        </p>
+                        <p>
+                        Страница отправки: <a href="#PAGE#">#PAGE#</a>
+                        </p>
+                        <p>
+                        Используемый USER AGENT: #USER_AGENT#
+                        </p>
+                        <p>
+                        Письмо сформировано автоматически.
+                        </p>
+                        </body>
+                        </html>
+                        '
+                    ]);
+
+                    if (!$messId) {
+                        $DB->Rollback();
+
+                        $APPLICATION->ThrowException('Произошла ошибка при создании почтового события' . $mess->LAST_ERROR);
+
+                        return false;
+                    } else {
+                        $DB->Commit();
+                    }
+                }
+            }
+
+            $this->DEFAULT_OPTIONS['USE_NOTIFY'] = "Y";
+            $this->DEFAULT_OPTIONS['NOTIFY_TYPE'] = self::DEFAULT_MAIL_EVENT_TYPE;
+            $this->DEFAULT_OPTIONS['NOTIFY_EMAIL'] = Option::get('main', 'email_from');
+        } catch (\Throwable $th) {
+            $APPLICATION->ThrowException($th->getMessage() . '\n' . $th->getTraceAsString());
+            return false;
+        }
+
+        return true;
+    }
+
+    public function UnInstallManagerMailEvents()
+    {
+        $dbSites = CSite::GetList($by = "sort", $order = "desc");
+        while ($arSite = $dbSites->Fetch()) {
+            $arSites[] = $arSite["LID"];
+        }
+
+        foreach ($arSites as $siteId) {
+            $dbMess = CEventMessage::GetList($by = "id", $order = "desc", ['SITE_ID' => $siteId, 'TYPE_ID' => self::DEFAULT_MAIL_EVENT_TYPE]);
+            $arMess = $dbMess->Fetch();
+            CEventMessage::Delete($arMess['ID']);
+        }
+
+        CEventType::Delete(self::DEFAULT_MAIL_EVENT_TYPE);
+    }
 
     public function DoInstall()
     {
@@ -45,6 +208,10 @@ class welpodron_reviews extends CModule
             return false;
         }
 
+        if (!$this->InstallManagerMailEvents()) {
+            return false;
+        }
+
         if (!$this->InstallOptions()) {
             return false;
         }
@@ -65,7 +232,7 @@ class welpodron_reviews extends CModule
         } elseif ($request->get("step") == 2) {
             $this->UnInstallFiles();
             $this->UnInstallOptions();
-            // По умолчанию БД не удаляется 
+            $this->UnInstallManagerMailEvents();
 
             if ($request->get("savedata") != "Y") {
                 $this->UnInstallDB();
@@ -207,20 +374,6 @@ class welpodron_reviews extends CModule
                         "USER_TYPE" => "DateTime",
                         "IBLOCK_ID" => $firstIblockId
                     ],
-                    [
-                        "NAME" => "Дата публикации отзыва",
-                        "CODE" => "date",
-                        "PROPERTY_TYPE" => "S",
-                        "USER_TYPE" => "DateTime",
-                        "IBLOCK_ID" => $iblockId
-                    ],
-                    // [
-                    //     "NAME" => "Элемент",
-                    //     "CODE" => "element",
-                    //     "PROPERTY_TYPE" => "E",
-                    //     "IS_REQUIRED" => "Y",
-                    //     "IBLOCK_ID" => $iblockId
-                    // ],
                     [
                         "NAME" => "Оценка",
                         "CODE" => "rating",
