@@ -35,6 +35,16 @@ class WelpodronElementReviews extends CBitrixComponent
         }
 
         if ($this->startResultCache($this->arParams['CACHE_TIME'] ? $this->arParams['CACHE_TIME'] : false, $additionalCache)) {
+            //! ТODO: Ахтунг в ORM нет поддержки тегированного кэша по умолчанию
+            //! Необходима собственная реализация если она вообще нужна
+            //! Подробнее : https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=43&LESSON_ID=2978&LESSON_PATH=3913.3516.4790.2127.2978
+            //! Cм пример iblockresult.php метод Fetch 
+            if ($this->arParams["CACHE_TYPE"] != "N" && $this->arParams['CACHE_TIME'] && $this->arParams['IBLOCK_ID'] > 0) {
+                if (defined("BX_COMP_MANAGED_CACHE")) {
+                    \CIBlock::registerWithTagCache($this->arParams['IBLOCK_ID']);
+                }
+            }
+
             $this->arResult = $this->getReviews();
 
             if (!($this->arParams['PRODUCT_NUMBER']) || $this->arParams['PROPERTY_PRODUCT_NUMBER_ID'] <= 0) {
